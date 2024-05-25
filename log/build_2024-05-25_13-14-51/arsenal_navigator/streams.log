@@ -1,0 +1,22 @@
+[1.047s] Invoking command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data
+[1.351s] running egg_info
+[1.375s] writing ../../build/arsenal_navigator/arsenal_navigator.egg-info/PKG-INFO
+[1.376s] writing dependency_links to ../../build/arsenal_navigator/arsenal_navigator.egg-info/dependency_links.txt
+[1.383s] writing entry points to ../../build/arsenal_navigator/arsenal_navigator.egg-info/entry_points.txt
+[1.385s] writing requirements to ../../build/arsenal_navigator/arsenal_navigator.egg-info/requires.txt
+[1.386s] writing top-level names to ../../build/arsenal_navigator/arsenal_navigator.egg-info/top_level.txt
+[1.390s] reading manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[1.397s] writing manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[1.397s] running build
+[1.397s] running build_py
+[1.402s] running install
+[1.402s] running install_lib
+[1.403s] running install_data
+[1.404s] copying description/robot_core.xacro -> /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/arsenal_navigator/description
+[1.407s] running install_egg_info
+[1.412s] removing '/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator-0.0.0-py3.10.egg-info' (and everything under it)
+[1.412s] Copying ../../build/arsenal_navigator/arsenal_navigator.egg-info to /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator-0.0.0-py3.10.egg-info
+[1.414s] running install_scripts
+[1.451s] Installing testerNode script to /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/arsenal_navigator
+[1.453s] writing list of installed files to '/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log'
+[1.502s] Invoked command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator' returned '0': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data

@@ -1,0 +1,22 @@
+[1.132s] Invoking command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data
+[1.534s] running egg_info
+[1.536s] writing ../../build/arsenal_navigator/arsenal_navigator.egg-info/PKG-INFO
+[1.538s] writing dependency_links to ../../build/arsenal_navigator/arsenal_navigator.egg-info/dependency_links.txt
+[1.539s] writing entry points to ../../build/arsenal_navigator/arsenal_navigator.egg-info/entry_points.txt
+[1.540s] writing requirements to ../../build/arsenal_navigator/arsenal_navigator.egg-info/requires.txt
+[1.542s] writing top-level names to ../../build/arsenal_navigator/arsenal_navigator.egg-info/top_level.txt
+[1.547s] reading manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[1.550s] writing manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[1.551s] running build
+[1.551s] running build_py
+[1.552s] running install
+[1.556s] running install_lib
+[1.556s] running install_data
+[1.556s] creating /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/arsenal_navigator/launch
+[1.556s] copying launch/rsp.launch.py -> /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/arsenal_navigator/launch
+[1.556s] running install_egg_info
+[1.559s] removing '/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator-0.0.0-py3.10.egg-info' (and everything under it)
+[1.566s] Copying ../../build/arsenal_navigator/arsenal_navigator.egg-info to /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator-0.0.0-py3.10.egg-info
+[1.567s] running install_scripts
+[1.603s] writing list of installed files to '/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log'
+[1.649s] Invoked command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator' returned '0': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data

@@ -1,0 +1,33 @@
+[3.545s] Invoking command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data
+[4.321s] running egg_info
+[4.323s] creating ../../build/arsenal_navigator/arsenal_navigator.egg-info
+[4.323s] writing ../../build/arsenal_navigator/arsenal_navigator.egg-info/PKG-INFO
+[4.325s] writing dependency_links to ../../build/arsenal_navigator/arsenal_navigator.egg-info/dependency_links.txt
+[4.326s] writing entry points to ../../build/arsenal_navigator/arsenal_navigator.egg-info/entry_points.txt
+[4.327s] writing requirements to ../../build/arsenal_navigator/arsenal_navigator.egg-info/requires.txt
+[4.328s] writing top-level names to ../../build/arsenal_navigator/arsenal_navigator.egg-info/top_level.txt
+[4.328s] writing manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[4.332s] reading manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[4.341s] writing manifest file '../../build/arsenal_navigator/arsenal_navigator.egg-info/SOURCES.txt'
+[4.341s] running build
+[4.341s] running build_py
+[4.342s] creating /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build
+[4.342s] creating /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build/lib
+[4.342s] creating /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build/lib/arsenal_navigator
+[4.342s] copying arsenal_navigator/__init__.py -> /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build/lib/arsenal_navigator
+[4.346s] running install
+[4.349s] running install_lib
+[4.350s] creating /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator
+[4.351s] copying /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build/lib/arsenal_navigator/__init__.py -> /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator
+[4.352s] byte-compiling /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator/__init__.py to __init__.cpython-310.pyc
+[4.365s] running install_data
+[4.365s] creating /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/ament_index
+[4.366s] creating /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/ament_index/resource_index
+[4.366s] creating /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/ament_index/resource_index/packages
+[4.366s] copying resource/arsenal_navigator -> /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/ament_index/resource_index/packages
+[4.366s] copying package.xml -> /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/share/arsenal_navigator
+[4.366s] running install_egg_info
+[4.368s] Copying ../../build/arsenal_navigator/arsenal_navigator.egg-info to /home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages/arsenal_navigator-0.0.0-py3.10.egg-info
+[4.376s] running install_scripts
+[4.489s] writing list of installed files to '/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log'
+[4.581s] Invoked command in '/home/n0sc3tipsum/ros2_ws/src/arsenal_navigator' returned '0': PYTHONPATH=/home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/prefix_override:/home/n0sc3tipsum/ros2_ws/install/arsenal_navigator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_navigator build --build-base /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/build install --record /home/n0sc3tipsum/ros2_ws/build/arsenal_navigator/install.log --single-version-externally-managed install_data
