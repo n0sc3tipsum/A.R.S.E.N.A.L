@@ -1,3 +1,0 @@
-[console_scripts]
-testerNode = arsenal_navigator.testerNode:main
-
