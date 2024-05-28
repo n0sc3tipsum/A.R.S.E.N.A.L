@@ -11,9 +11,17 @@
   <depend>os</depend>
   <depend>launch</depend>
   <depend>launch_ros</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>joint_state_publisher_gui</depend>
   <depend>robot_state_publisher</depend>
   <depend>xacro</depend>
   <depend>std_msgs</depend>
+  <depend>rviz</depend>
+  <depend>control_msgs</depend>
+  <depend>control_toolbox</depend>
+  <depend>controller_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_manager_msgs</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

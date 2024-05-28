@@ -12,7 +12,7 @@ find_package(robot_state_publisher REQUIRED)
 
 #install launch fiels
 install(
-    DIRECTORY description launch
+    DIRECTORY description launch rviz
     DESTINATION share/${PROJECT_NAME}
 )
 
