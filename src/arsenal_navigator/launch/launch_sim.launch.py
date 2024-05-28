@@ -16,11 +16,7 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
 
-
-    # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
-    # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
-
-    package_name='arsenal_navigator' #<--- CHANGE ME
+    package_name='arsenal_navigator' 
     pkg_path = os.path.join(get_package_share_directory('arsenal_navigator'))
 
     rsp = IncludeLaunchDescription(
@@ -100,7 +96,7 @@ def generate_launch_description():
 
 
 
-    # Launch them all!
+    # Launch them all
     return LaunchDescription([
         DeclareLaunchArgument(
             name='rvizconfig', default_value=rviz_config_path,
