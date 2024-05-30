@@ -13,8 +13,10 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', glob('launch/*')),
         ('share/' + package_name + '/description', glob('description/*')),
-        #('share/' + package_name + '/rviz', glob('rviz/*')),
+        ('share/' + package_name + '/maps', glob('maps/*')),
         ('share/' + package_name + '/config', glob('config/*')),
+        ('share/' + package_name + '/worlds', glob('worlds/*')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
