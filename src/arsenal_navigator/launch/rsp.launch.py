@@ -19,8 +19,9 @@ def generate_launch_description():
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('arsenal_navigator'))
     xacro_file = os.path.join(pkg_path,'description','arsenal_robot_description.urdf.xacro')
+    use_lidar_sim = LaunchConfiguration('sim_lidar')
     # robot_description_config = xacro.process_file(xacro_file).toxml()
-    robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', use_ros2_control, ' sim_mode:=', use_sim_time])
+    robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', use_ros2_control, ' sim_mode:=', use_sim_time, ' sim_lidar:=', use_lidar_sim])
     
     # Create a robot_state_publisher node
     params = {'robot_description': robot_description_config, 'use_sim_time': use_sim_time}
@@ -42,6 +43,11 @@ def generate_launch_description():
             'use_ros2_control',
             default_value='true',
             description='Use ros2_control if true'),
+        DeclareLaunchArgument(
+            'sim_lidar',
+            default_value='true',
+            description='Use simulated lidar or real one'
+        ),
 
         node_robot_state_publisher
     ])
