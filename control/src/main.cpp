@@ -24,14 +24,13 @@ float alpha = 0.98; // complementary filter coefficient
 float accelTilt = 0.0;
 // float integralThreshold = 0.5;
 
-// PID constant
+// PID constant for tilt
 const float Kp = 980;
 const float Ki = 5.0;
 const float Kd = 20.0;
 
-// PID for balancing
-float setpoint = -0.03; // desired tilted angle (upright)
-float offset = -0.03;
+// PID for tilt angle
+float setpoint = 0.15; // desired tilted angle (upright)
 float tilt = 0.0; // current tilt
 float gyroRate = 0.0;
 float prevTilt = 0.0; //previous tilt for derivative measurement
@@ -39,9 +38,16 @@ float integral = 0.0; // integral term
 float derivative = 0.0; // derivative term
 float error = 0.0;
 float PIDout = 0.0;
+
+// PID constant for speed
+const float KpSpeed = 0.001;
+
+//PID for speed
+float SetSpeed = 0.0; // desired speed
+float SpeedError = 0.0; // the error on the speed 
 float CurrSpeed = 0.0;
-
-
+float PrevPos = 0.0;
+float CurrPos = 0.0;
 
 
 //Global objects
@@ -50,6 +56,12 @@ Adafruit_MPU6050 mpu;         //Default pins for I2C are SCL: IO22/Arduino D3, S
 
 step step1(STEPPER_INTERVAL_US,STEPPER1_STEP_PIN,STEPPER1_DIR_PIN );
 step step2(STEPPER_INTERVAL_US,STEPPER2_STEP_PIN,STEPPER2_DIR_PIN );
+
+
+// function for lowpass filtering speed
+float LPF (float curr, float prev, float coeff){
+    return coeff * curr + (1-coeff) * prev;
+}
 
 
 //Interrupt Service Routine for motor update
@@ -124,6 +136,19 @@ void loop()
     accelTilt = a.acceleration.z/9.67;
     gyroRate = g.gyro.pitch;
 
+
+
+    // CurrPos = (step1.getPositionRad() + step2.getPositionRad())/2;
+
+    CurrSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/ 2;
+
+    SpeedError = LPF(CurrSpeed, PrevPos, 0.5);
+
+    // setpoint = SpeedError * KpSpeed -0.03; 
+
+
+
+
     tilt = alpha * (tilt + gyroRate * dt) + (1 - alpha) * accelTilt;
     error = setpoint - tilt;
     if (error == 0){
@@ -169,16 +194,16 @@ void loop()
     // step1.runStepper();
     // step2.runStepper();
     
-  
+    PrevPos = CurrSpeed;
     prevTilt = error;
   }
   
   // //Print updates every PRINT_INTERVAL ms
   if (millis() > printTimer) {
     printTimer += PRINT_INTERVAL;
-    Serial.print(printTimer);
-    Serial.print(" ");
     Serial.print(tilt);
+    Serial.print(" ");
+    Serial.print(SpeedError);
     Serial.println();
   }
 }
