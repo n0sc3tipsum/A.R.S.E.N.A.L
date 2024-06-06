@@ -14,7 +14,7 @@ def generate_launch_description():
     params_file = LaunchConfiguration('params_file')
     
     default_params_file = os.path.join(get_package_share_directory('arsenal_navigator'),
-                                       'config', 'mapper_params_online_async.yaml')
+                                       'config', 'localization_params_online_async.yaml')
 
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time',
