@@ -6,16 +6,16 @@
     <xacro:property name="chassis_radius" value="0.049"/>
     <xacro:property name="chassis_height" value="0.453"/>
 
-    <xacro:property name="wheel_radius" value="0.035"/>
-    <xacro:property name="wheel_thickness" value="0.025"/>
+    <xacro:property name="wheel_radius" value="0.03"/>
+    <xacro:property name="wheel_thickness" value="0.015"/>
     <xacro:property name="wheel_offset_y" value="0.06"/>
-    <xacro:property name="wheel_offset_z" value="-0.015"/>
+    <xacro:property name="wheel_offset_z" value="-0.016"/>
     <xacro:property name="wheel_offset_x" value="0.065"/>
-    <xacro:property name="wheel_mass" value="0.03"/>
+    <xacro:property name="wheel_mass" value="0.05"/>
 
     <xacro:property name="caster_wheel_mass" value="0.02"/>
     <xacro:property name="caster_wheel_radius" value="0.015"/>
-    <xacro:property name="caster_wheel_offset_x" value="0.049"/>
+    <xacro:property name="caster_wheel_offset_x" value="0.07"/>
     <xacro:property name="caster_wheel_offset_z" value="${wheel_offset_z - wheel_radius + caster_wheel_radius}"/>
 
 
@@ -77,7 +77,7 @@
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="1.0" length="${chassis_height}" radius="${chassis_radius}">
-            <origin xyz="0.049 0 ${chassis_height/10}" rpy="0 0 0"/>
+            <origin xyz="0.049 0 ${chassis_height/2}" rpy="0 0 0"/>
         </xacro:inertial_cylinder>
     </link>
 
@@ -100,10 +100,22 @@
                 <material name="blue"/>
             </geometry>
         </visual>
-
+        <surface>
+            <friction>
+            <ode>
+                <mu>1.0</mu>
+                <mu2>1.0</mu2>
+            </ode>
+            </friction>
+            <contact>
+            <ode>
+                <min_depth>0.08</min_depth>
+            </ode>
+            </contact>
+        </surface>
         <collision>
             <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                <sphere radius="${wheel_radius}"/>
             </geometry>
         </collision>
 
@@ -131,10 +143,22 @@
                 <material name="blue"/>
             </geometry>
         </visual>
-
+        <surface>
+            <friction>
+                <ode>
+                    <mu>1.0</mu>
+                    <mu2>1.0</mu2>
+                </ode>
+            </friction>
+            <contact>
+                <ode>
+                    <min_depth>0.08</min_depth>
+                </ode>
+            </contact>
+        </surface>
         <collision>
             <geometry>
-                <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
+                <sphere radius="${wheel_radius}" />
             </geometry>
         </collision>
 
@@ -152,7 +176,7 @@
     <joint name="front_caster_wheel_joint" type="fixed">
         <parent link="chassis"/>
         <child link="front_caster_wheel"/>
-        <origin xyz="0 0 0"/>
+        <origin xyz="-${caster_wheel_offset_x} 0 0"/>
     </joint>
 
     <link name="front_caster_wheel">
@@ -168,7 +192,11 @@
                 <sphere radius="${caster_wheel_radius}"/>
             </geometry>
         </collision>
-
+        <contact>
+            <ode>
+                <min_depth>0.1</min_depth>
+            </ode>
+        </contact>
         <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_sphere>
@@ -184,7 +212,7 @@
     <joint name="back_caster_wheel_joint" type="fixed">
         <parent link="chassis"/>
         <child link="back_caster_wheel"/>
-        <origin xyz="${(2*chassis_radius)} 0 0"/>
+        <origin xyz="${(2*chassis_radius) + caster_wheel_offset_x} 0 0"/>
     </joint>
 
     <link name="back_caster_wheel">
@@ -194,7 +222,11 @@
             </geometry>
             <material name="white"/>
         </visual>
-
+        <contact>
+            <ode>
+                <min_depth>0.1</min_depth>
+            </ode>
+        </contact>
         <collision>
             <geometry>
                 <sphere radius="${caster_wheel_radius}"/>
