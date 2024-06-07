@@ -16,6 +16,7 @@ setup(
         ('share/' + package_name + '/maps', glob('maps/*')),
         ('share/' + package_name + '/config', glob('config/*')),
         ('share/' + package_name + '/worlds', glob('worlds/*')),
+        ('share/' + package_name + '/src', glob('src/*')),
 
     ],
     install_requires=['setuptools'],
@@ -27,7 +28,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'testerNode = arsenal_navigator.testerNode:main',
+            'OdomCalculator = arsenal_navigator.OdomCalculator:main',
         ],
     },
 )

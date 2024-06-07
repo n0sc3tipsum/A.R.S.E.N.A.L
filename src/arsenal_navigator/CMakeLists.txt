@@ -16,4 +16,11 @@ install(
     DESTINATION share/${PROJECT_NAME}
 )
 
+# Install Python executables
+install(PROGRAMS
+  src/OdomCalculator.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
 ament_package()
