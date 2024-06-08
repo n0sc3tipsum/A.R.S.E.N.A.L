@@ -24,29 +24,30 @@ float alpha = 0.98; // complementary filter coefficient
 float accelTilt = 0.0;
 // float integralThreshold = 0.5;
 
-// PID constant
-const float Kp = 92;
-const float Ki = 0.2;
-const float Kd = 30.0;
+// PID constant for tilt
+const float Kp = 980;
+const float Ki = 5.0;
+const float Kd = 20.0;
 
-// PID for balancing
-float setpoint = 0.0; // desired tilted angle (upright)
+// PID for tilt angle
+float setpoint = 0.15; // desired tilted angle (upright)
 float tilt = 0.0; // current tilt
 float gyroRate = 0.0;
 float prevTilt = 0.0; //previous tilt for derivative measurement
 float integral = 0.0; // integral term
 float derivative = 0.0; // derivative term
-float tolerance = 0.01; // to counteract the bias in the acclerometer and gyro
 float error = 0.0;
 float PIDout = 0.0;
-float IntegratedSpeed = 0.0;
-float CurrSpeed = 0.0;
+
+// PID constant for speed
+const float KpSpeed = 0.001;
 
 //PID for speed
-float speedpoint = 0.0;
-float SpeedError = 0.0;
-float KpSpeed = 1;
-
+float SetSpeed = 0.0; // desired speed
+float SpeedError = 0.0; // the error on the speed 
+float CurrSpeed = 0.0;
+float PrevPos = 0.0;
+float CurrPos = 0.0;
 
 
 //Global objects
@@ -55,6 +56,12 @@ Adafruit_MPU6050 mpu;         //Default pins for I2C are SCL: IO22/Arduino D3, S
 
 step step1(STEPPER_INTERVAL_US,STEPPER1_STEP_PIN,STEPPER1_DIR_PIN );
 step step2(STEPPER_INTERVAL_US,STEPPER2_STEP_PIN,STEPPER2_DIR_PIN );
+
+
+// function for lowpass filtering speed
+float LPF (float curr, float prev, float coeff){
+    return coeff * curr + (1-coeff) * prev;
+}
 
 
 //Interrupt Service Routine for motor update
@@ -126,33 +133,37 @@ void loop()
     //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
     // tiltx = a.acceleration.z/9.67; 
     // accelTilt = 90- atan2(a.acceleration.x, a.acceleration.z) * 180 / PI;
-    tilt = a.acceleration.z/9.67;
-    gyroRate = g.gyro.pitch + 0.02;
+    accelTilt = a.acceleration.z/9.67;
+    gyroRate = g.gyro.pitch;
 
-    // complementary filter
-    // tilt = alpha * (tilt + gyroRate * dt) + (1-alpha) * accelTilt;
 
-    // CurrSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
 
-    // SpeedError = CurrSpeed - speedpoint;
-    // setpoint = KpSpeed * SpeedError;
+    // CurrPos = (step1.getPositionRad() + step2.getPositionRad())/2;
 
+    CurrSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/ 2;
+
+    SpeedError = LPF(CurrSpeed, PrevPos, 0.5);
+
+    // setpoint = SpeedError * KpSpeed -0.03; 
+
+
+
+
+    tilt = alpha * (tilt + gyroRate * dt) + (1 - alpha) * accelTilt;
     error = setpoint - tilt;
-
-    if (abs(error) < tolerance){
-      //negate inherent offset/biases
-      IntegratedSpeed = 0.0;
-      error = 0.0;
+    if (error == 0){
       integral = 0.0;
     }
-    integral = error * dt;
+
+    
+    integral += error * dt;
     
 
     derivative = (error - prevTilt)/ dt;
 
 
 
-    PIDout = (error * Kp) + (derivative*Kd) + (integral*Ki);
+    PIDout = error * Kp + derivative*Kd + integral*Ki;
 
     //Set target motor speed proportional to tilt angle
     //Note: this is for demonstrating accelerometer and motors - it won't work as a balance controller
@@ -161,26 +172,38 @@ void loop()
     step1.setAccelerationRad(PIDout);
     step2.setAccelerationRad(PIDout);
 
-    IntegratedSpeed += PIDout * dt;
+    // IntegratedSpeed += PIDout * dt;
 
-    step1.setTargetSpeedRad(IntegratedSpeed);
-    step2.setTargetSpeedRad(IntegratedSpeed);
+    // if (abs(IntegratedSpeed) > 10 ){
+    //   IntegratedSpeed = 0;
+    // }
+    if (PIDout < 0){
+      step1.setTargetSpeedRad(-20);
+      step2.setTargetSpeedRad(-20);
+      
+
+    }
+    else{
+    step1.setTargetSpeedRad(20);
+    step2.setTargetSpeedRad(20);
+
+    }
+
+    step1.runStepper();
+    step2.runStepper();
+    // step1.runStepper();
+    // step2.runStepper();
     
-  
+    PrevPos = CurrSpeed;
     prevTilt = error;
   }
   
-  //Print updates every PRINT_INTERVAL ms
+  // //Print updates every PRINT_INTERVAL ms
   if (millis() > printTimer) {
     printTimer += PRINT_INTERVAL;
-    Serial.print(PIDout);
+    Serial.print(tilt);
     Serial.print(" ");
-    Serial.print(integral);
-    Serial.print(" ");
-    Serial.print(derivative);
-    Serial.print(" ");
-    Serial.print(error);
-    // Serial.print(gyroRate);
+    Serial.print(SpeedError);
     Serial.println();
   }
 }
