@@ -7,7 +7,6 @@ ROSComm::ROSComm()
     _ssid = "BA36 Hyperoptic 1Gbps Broadband";
     _pswd = "pkuusr5x";
  
-
 }
 
 void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
@@ -41,6 +40,7 @@ void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
         &init_options, 
         &allocator), 
         "Init Support Object");
+    //RCSOFTCHECK(rclc_support_init(&support, 0, NULL, &allocator), "Init Default SUpport");
 
 
     // Init node with configured support object
@@ -91,6 +91,11 @@ void ROSComm::CreatePublishers()
 {
     Serial.println("Initialising Publishers...");
 
+    _imu_pub = rcl_get_zero_initialized_publisher();
+    _left_wheel_state_pub = rcl_get_zero_initialized_publisher();
+    _right_wheel_state_pub = rcl_get_zero_initialized_publisher();
+        
+
     RCSOFTCHECK(rclc_publisher_init_default(
 		&_imu_pub,
 		&node,
@@ -130,7 +135,7 @@ void ROSComm::CreateSubscribers()
         &_cmd_vel_sub,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_vel"),
+        "/cmd_vel"),
         "Init cmd_vel Subsscriber");
 }
 

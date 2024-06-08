@@ -46,7 +46,7 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,1,107);
+    espRosAgent._agent_ip = IPAddress(192,168,1,100);
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
@@ -77,6 +77,6 @@ void setup()
 
 void loop()
 {
-    delay(100);
-    RCSOFTCHECK(rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100)), "Execute Spin");
+    delay(50);
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
 }
