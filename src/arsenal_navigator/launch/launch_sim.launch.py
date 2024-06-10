@@ -97,7 +97,9 @@ def generate_launch_description():
         twist_mux,
         gazebo,
         spawn_entity,
-        #controller_manager,
-        delayed_diff_drive_spawner,
-        delayed_joint_broad_spawner
+        #delayed_controller_manager,
+        #delayed_diff_drive_spawner,
+        #delayed_joint_broad_spawner,
+        diff_drive_spawner,
+        joint_broad_spawner
     ])
