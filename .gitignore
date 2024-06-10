@@ -8,3 +8,4 @@ __pycache__/
 *$py.class
 src/arsenal_bot/test/
 *.log
+test/
