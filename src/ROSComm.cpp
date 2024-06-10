@@ -6,6 +6,7 @@ ROSComm::ROSComm()
     _agent_port = 8888;
     _ssid = "BA36 Hyperoptic 1Gbps Broadband";
     _pswd = "pkuusr5x";
+    _msg_conf = {0};
  
 }
 
@@ -55,7 +56,7 @@ void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
     Serial.println("");
     CreateSubscribers();
     Serial.println("");
-    CreateMessages(_imu_msg, _lwheel_state_msg, _rwheel_state_msg);
+    InitMessages();
 
     Serial.println("Initialising Executor");
     unsigned int num_handles = 2;
@@ -108,7 +109,7 @@ void ROSComm::CreatePublishers()
 		&_batt_state_pub,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
-		"sensor_msgs/BetteryState"),
+		"esp/BatteryState"),
         "Init Battery State Publisher");
 
 
@@ -136,26 +137,123 @@ void ROSComm::CreateSubscribers()
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "/cmd_vel"),
-        "Init cmd_vel Subsscriber");
+        "Init cmd_vel Subscriber");
 }
 
-void ROSComm::CreateMessages(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointState &left_wheel_state, sensor_msgs__msg__JointState &right_wheel_state)
+void ROSComm::Cleanup()
+{
+    RCSOFTCHECK(rclc_executor_fini(&executor), "Shutting Down Executor");
+    RCSOFTCHECK(rcl_publisher_fini(&_imu_pub, &node),"Shutting Down Imu Pub");
+    RCSOFTCHECK(rcl_publisher_fini(&_left_wheel_state_pub, &node),"Shutting Down Left Wheel Pub");
+    RCSOFTCHECK(rcl_publisher_fini(&_right_wheel_state_pub, &node),"Shutting Down Right Wheel Pub");
+    RCSOFTCHECK(rcl_publisher_fini(&_batt_state_pub, &node),"Shutting Down Batt State Pub");
+    RCSOFTCHECK(rcl_subscription_fini(&_cmd_vel_sub, &node), "Shutting Down Cmd_vel Sub");
+    RCSOFTCHECK(rcl_timer_fini(&timer), "Shutting Down Timer");
+    RCSOFTCHECK(rcl_node_fini(&node), "Shutting Down ESP Node");
+    RCSOFTCHECK(rclc_support_fini(&support), "Shutting Down Support");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+                &_imu_msg, _msg_conf), 
+                "De-Alloc  IMU Message Memory");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+                &_lwheel_state_msg, _msg_conf), 
+                "De-Alloc  Left Wheel Message Memory");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+                &_rwheel_state_msg, _msg_conf), 
+                "De-Alloc  Right Wheel Message Memory");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+                &_cmd_vel_msg, _msg_conf), 
+                "De-Alloc  CMD Vel Message Memory");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(builtin_interfaces, msg, Time),
+                &_time_stamp, _msg_conf), 
+                "De-Alloc Time Stamp Message Memory");
+
+}
+
+void ROSComm::InitMessages()
+{
+
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+                &_imu_msg, _msg_conf), 
+                "Alloc IMU Message Memory");
+
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+                &_lwheel_state_msg, _msg_conf), 
+                "Alloc Left Wheel Message Memory");
+
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+                &_rwheel_state_msg, _msg_conf), 
+                "Alloc Right Wheel Message Memory");
+
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+                &_cmd_vel_msg, _msg_conf), 
+                "Alloc CMD Vel Message Memory");
+
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(builtin_interfaces, msg, Time),
+                &_time_stamp, _msg_conf), 
+                "Alloc Time Stamp Message Memory");
+
+
+    _imu_msg.header.frame_id          = micro_ros_string_utilities_set(_imu_msg.header.frame_id, "imu_frame");
+    _lwheel_state_msg.header.frame_id = micro_ros_string_utilities_set(_lwheel_state_msg.header.frame_id, "left_wheel_frame");
+    _rwheel_state_msg.header.frame_id = micro_ros_string_utilities_set(_rwheel_state_msg.header.frame_id, "right_wheel_frame");
+
+    *_lwheel_state_msg.name.data = micro_ros_string_utilities_set(*_lwheel_state_msg.name.data, "left_wheel_joint");
+    *_rwheel_state_msg.name.data = micro_ros_string_utilities_set(*_rwheel_state_msg.name.data, "right_wheel_joint");
+}
+
+void ROSComm::CreateMessages()
 {
     Serial.println("Creating Messages");
+
+    static micro_ros_utilities_memory_conf_t conf = {0};
+
 
     RCSOFTCHECK(!builtin_interfaces__msg__Time__init(&_time_stamp),
                 "Init Time Stamp");
 
-    RCSOFTCHECK(!geometry_msgs__msg__Twist__init(&_cmd_vel_msg),
-                "Init cmd_vel Message");
+    /*_time_stamp = builtin_interfaces__msg__Time__create();
+    NULLCHECK(_time_stamp, "Create Time Stamp Message");
 
-    RCSOFTCHECK(!sensor_msgs__msg__Imu__init(&imu_data),
-                "Init cmd_vel Messaage");
-    RCSOFTCHECK(!(geometry_msgs__msg__Vector3__init(&imu_data.angular_velocity)),
+    _cmd_vel_msg = geometry_msgs__msg__Twist__create();
+    NULLCHECK(_cmd_vel_msg, "Create Cmd_vel Message");
+                
+    _imu_msg = sensor_msgs__msg__Imu__create();
+    NULLCHECK(_imu_msg, "Create IMU Message");
+
+    _rwheel_state_msg = sensor_msgs__msg__JointState__create();
+    NULLCHECK(_rwheel_state_msg, "Create Right Wheel  State Message");
+
+    _lwheel_state_msg = sensor_msgs__msg__JointState__create();
+    NULLCHECK(_lwheel_state_msg, "Create Left Wheel  State Message");*/
+
+    RCSOFTCHECK(!sensor_msgs__msg__Imu__init(&_imu_msg),
+                "Init Imu Messaage");
+
+    /*RCSOFTCHECK(!(geometry_msgs__msg__Vector3__init(&_imu_msg.angular_velocity)),
                 "Init Angular Vel Messaage");
-    RCSOFTCHECK(!geometry_msgs__msg__Vector3__init(&imu_data.linear_acceleration),
-                "Init Acceleration Messaage");
+    RCSOFTCHECK(!geometry_msgs__msg__Vector3__init(&_imu_msg.linear_acceleration),
+                "Init Acceleration Messaage");*/
 
+    RCSOFTCHECK(!geometry_msgs__msg__Twist__init(&_cmd_vel_msg), 
+                "Init CMD Vel");
+
+    _imu_msg.header.frame_id = micro_ros_string_utilities_set(_imu_msg.header.frame_id , "imu_link");
+    
     //data for psd, rms are from data sheet
     float accel_psd = 400e-6;
     float accel_bw = 100;
@@ -165,57 +263,59 @@ void ROSComm::CreateMessages(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__
 
     for (size_t i = 0; i < 9; ++i) 
     {
-        imu_data.linear_acceleration_covariance[i] = (i % 4 == 0) ? accel_var : 0.0;
-        imu_data.angular_velocity_covariance[i] = (i % 4 == 0) ? gyro_var : 0.0;
-        imu_data.orientation_covariance[i] = -1.0; // -1 indicates no orientation estimate
+        _imu_msg.linear_acceleration_covariance[i] = (i % 4 == 0) ? accel_var : 0.0;
+        _imu_msg.angular_velocity_covariance[i] = (i % 4 == 0) ? gyro_var : 0.0;
+        _imu_msg.orientation_covariance[i] = -1.0; // -1 indicates no orientation estimate
     }
-
 
 
 	const char *lwheel_name = "left_wheel_joint";
 	const char *rwheel_name = "right_wheel_joint";
 
 	//Setup the joint state msg
-	RCSOFTCHECK(!sensor_msgs__msg__JointState__init(&left_wheel_state),
+	RCSOFTCHECK(!sensor_msgs__msg__JointState__init(&_lwheel_state_msg),
                 "Init Left Wheel State Message");
-    RCSOFTCHECK(!sensor_msgs__msg__JointState__init(&right_wheel_state),
+    RCSOFTCHECK(!sensor_msgs__msg__JointState__init(&_rwheel_state_msg),
                 "Init Right Wheel State Message");
 
-	RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&left_wheel_state.position, 1),
+	RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&_lwheel_state_msg.position, 1),
                 "Init Left Wheel Position Message");
-    RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&right_wheel_state.position, 1),
+    RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&_rwheel_state_msg.position, 1),
                 "Init Right Wheel Position Message");
                 
-	RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&left_wheel_state.velocity, 1),
+	RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&_lwheel_state_msg.velocity, 1),
                 "Init Left Wheel Vel Message");
-    RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&right_wheel_state.velocity, 1),
+    RCSOFTCHECK(!rosidl_runtime_c__double__Sequence__init(&_rwheel_state_msg.velocity, 1),
                 "Init Right Wheel Vel Message");
 
-	left_wheel_state.position.size = 1;
-	left_wheel_state.position.capacity = 1;
-    right_wheel_state.position.size = 1;
-	right_wheel_state.position.capacity = 1;
+	_lwheel_state_msg.position.size = 1;
+	_lwheel_state_msg.position.capacity = 1;
+    _rwheel_state_msg.position.size = 1;
+	_rwheel_state_msg.position.capacity = 1;
 
-    left_wheel_state.velocity.size = 1;
-	left_wheel_state.velocity.capacity = 1;
-    right_wheel_state.velocity.size = 1;
-	right_wheel_state.velocity.capacity = 1;
+    _lwheel_state_msg.velocity.size = 1;
+	_lwheel_state_msg.velocity.capacity = 1;
+    _rwheel_state_msg.velocity.size = 1;
+	_rwheel_state_msg.velocity.capacity = 1;
 
-	RCSOFTCHECK(!rosidl_runtime_c__String__Sequence__init(&left_wheel_state.name, 1), "Init Left Wheel Name");
-	if (!rosidl_runtime_c__String__assign(&left_wheel_state.name.data[0], lwheel_name)){Serial.println("ERROR: Joined assignment failed\n");}
-    left_wheel_state.name.size=1;
-    left_wheel_state.name.capacity=1;
+	//RCSOFTCHECK(!rosidl_runtime_c__String__Sequence__init(&_rwheel_state_msg.name, 1), "Init Left Wheel Name");
+	//if (!rosidl_runtime_c__String__assign(&_lwheel_state_msg.name.data[0], lwheel_name)){Serial.println("ERROR: Joined assignment failed\n");}
+    _lwheel_state_msg.name.size=1;
+    _lwheel_state_msg.name.capacity=1;
 
-    RCSOFTCHECK(!rosidl_runtime_c__String__Sequence__init(&right_wheel_state.name, 1), "Init Right Wheel Name");
-	if (!rosidl_runtime_c__String__assign(&right_wheel_state.name.data[0], rwheel_name)){Serial.println("ERROR: Joined assignment failed\n");}
-    right_wheel_state.name.size=1;
-    right_wheel_state.name.capacity=1;
+    RCSOFTCHECK(rosidl_runtime_c__String__assignn(_lwheel_state_msg.name.data, lwheel_name, sizeof(lwheel_name)), "Assign Left Wheel Name");
+    RCSOFTCHECK(rosidl_runtime_c__String__assignn(_rwheel_state_msg.name.data, lwheel_name, sizeof(lwheel_name)), "Assign Right Wheel Name");
+
+    //RCSOFTCHECK(!rosidl_runtime_c__String__Sequence__init(&_rwheel_state_msg.name, 1), "Init Right Wheel Name");
+	//if (!rosidl_runtime_c__String__assign(&_rwheel_state_msg.name.data[0], rwheel_name)){Serial.println("ERROR: Joined assignment failed\n");}
+    _rwheel_state_msg.name.size=std::string(rwheel_name).length();
+    _rwheel_state_msg.name.capacity=sizeof(rwheel_name);
 	
 }
 void ROSComm::PublishCallback(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
 {
 
-    getData(_imu_msg, _lwheel_state_msg, _rwheel_state_msg, lmotor, rmotor, imu);
+    getData(lmotor, rmotor, imu);
 
     RCSOFTCHECK(rcl_publish(&_left_wheel_state_pub, &_lwheel_state_msg, NULL), 
                 "Publish Left Wheel State");
@@ -228,8 +328,7 @@ void ROSComm::PublishCallback(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
 
 }
 
-void ROSComm::getData(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointState &left_wheel_state, sensor_msgs__msg__JointState &right_wheel_state, 
-                      step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
+void ROSComm::getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
 {
     sensors_event_t a, g, temp;
     //imu->getEvent(&a, &g, &temp);
@@ -238,16 +337,24 @@ void ROSComm::getData(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointSt
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
 
-    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &imu_data.header.stamp),
+    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
     "Copy Time TO IMU Message");
 
-    imu_data.linear_acceleration.x = 0.02;//a.acceleration.x;
-    imu_data.linear_acceleration.y = 0.01; //a.acceleration.y;
-    imu_data.linear_acceleration.z = -9.81; //a.acceleration.z;
+    _imu_msg.linear_acceleration.x = 0.02;//a.acceleration.x;
+    _imu_msg.linear_acceleration.y = 0.01; //a.acceleration.y;
+    _imu_msg.linear_acceleration.z = -9.81; //a.acceleration.z;
 
-    imu_data.angular_velocity.x = 0.0; //g.gyro.x;
-    imu_data.angular_velocity.y = 0.0; //g.gyro.y;
-    imu_data.angular_velocity.z = 0.5; //g.gyro.z;
+    _imu_msg.angular_velocity.x = 0.0; //g.gyro.x;
+    _imu_msg.angular_velocity.y = 0.0; //g.gyro.y;
+    _imu_msg.angular_velocity.z = 0.5; //g.gyro.z;
+
+    /*_imu_msg->linear_acceleration.x = 0.02;//a.acceleration.x;
+    _imu_msg->linear_acceleration.y = 0.01; //a.acceleration.y;
+    _imu_msg->linear_acceleration.z = -9.81; //a.acceleration.z;
+
+    _imu_msg->angular_velocity.x = 0.0; //g.gyro.x;
+    _imu_msg->angular_velocity.y = 0.0; //g.gyro.y;
+    _imu_msg->angular_velocity.z = 0.5; //g.gyro.z;*/
 
 
     float lmotor_pos = -1.0; //lmotor->getPositionRad();
@@ -257,25 +364,39 @@ void ROSComm::getData(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointSt
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
 
-    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &left_wheel_state.header.stamp),
+    /*now = esp_timer_get_time();
+    _time_stamp->sec = now / 1000000;
+    _time_stamp->nanosec = (now % 1000000) * 1000;*/
+
+    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_lwheel_state_msg.header.stamp),
     "Copy Time TO Left Wheel State Message");
 
-    left_wheel_state.position.data[0] = lmotor_pos;
-    left_wheel_state.velocity.data[0] = lmotor_speed;
+    _lwheel_state_msg.position.data[0] = lmotor_pos;
+    _lwheel_state_msg.velocity.data[0] = lmotor_speed;
+
+    /*_lwheel_state_msg->position.data[0] = lmotor_pos;
+    _lwheel_state_msg->velocity.data[0] = lmotor_speed;*/
 
 
     float rmotor_pos = 1.0; //rmotor->getPositionRad();
     float rmotor_speed = 3.0; //rmotor->getSpeedRad();
 
+    /*now = esp_timer_get_time();
+    _time_stamp->sec = now / 1000000;
+    _time_stamp->nanosec = (now % 1000000) * 1000;/*/
+
     now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
+    
+    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_rwheel_state_msg.header.stamp),
+    "Copy Time TO Right Wheel State Message");
 
-    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &left_wheel_state.header.stamp),
-    "Copy Time TO Left Wheel State Message");
+    _rwheel_state_msg.position.data[0] = rmotor_pos;
+    _rwheel_state_msg.velocity.data[0] = rmotor_speed;
 
-    right_wheel_state.position.data[0] = rmotor_pos;
-    right_wheel_state.velocity.data[0] = rmotor_speed;
+    /*_rwheel_state_msg->position.data[0] = rmotor_pos;
+    _rwheel_state_msg->velocity.data[0] = rmotor_speed;*/
 }
 
 rosidl_runtime_c__String ROSComm::getFrameId(const char *input)

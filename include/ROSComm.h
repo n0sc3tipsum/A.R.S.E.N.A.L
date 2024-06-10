@@ -17,6 +17,8 @@
 #include "rosidl_runtime_c/string_functions.h"
 #include "rosidl_runtime_c/primitives_sequence_functions.h"
 
+#include "micro_ros_utilities/type_utilities.h"
+#include "micro_ros_utilities/string_utilities.h"
 #include "builtin_interfaces/msg/time.h"
 #include "builtin_interfaces/msg/detail/time__functions.h"
 
@@ -30,7 +32,7 @@
 #include <cstring>
 
 #define RCSOFTCHECK(fn, er) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){Serial.print("ERROR : "); Serial.print(er); Serial.print(" --- Code : "); Serial.println(temp_rc);} else{Serial.print("SUCCESS : "); Serial.println(er);}}
-
+#define NULLCHECK(ptr_in,msg) {if (ptr_in== NULL) {Serial.print("ERROR NULL: "); Serial.println(msg);} else{Serial.print("SUCCESS : "); Serial.println(msg);}}
 
 class ROSComm
 {
@@ -43,9 +45,10 @@ public:
     void PublishCallback(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu);
     void CreatePublishers();
     void CreateSubscribers();
-    void CreateMessages(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointState &left_wheel_state, sensor_msgs__msg__JointState &right_wheel_state);
-    void getData(sensor_msgs__msg__Imu &imu_data, sensor_msgs__msg__JointState &left_wheel_state, sensor_msgs__msg__JointState &right_wheel_state, 
-                 step *lmotor, step *rmotor, Adafruit_MPU6050 *imu);
+    void CreateMessages();
+    void Cleanup();
+    void InitMessages();
+    void getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu);
 
     rosidl_runtime_c__String getFrameId(const char *input);
     
@@ -75,6 +78,8 @@ public:
     sensor_msgs__msg__Imu           _imu_msg;
     sensor_msgs__msg__JointState    _lwheel_state_msg;
     sensor_msgs__msg__JointState    _rwheel_state_msg;
+
+    micro_ros_utilities_memory_conf_t _msg_conf;
 };
 
 #endif
