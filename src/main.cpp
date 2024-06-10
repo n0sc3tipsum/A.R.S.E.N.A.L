@@ -72,11 +72,29 @@ void setup()
     RCSOFTCHECK(rclc_executor_add_timer(&espRosAgent.executor, &espRosAgent.timer), 
                 "Add Timer To Executor");
 
+}
 
+void cleanup()
+{
+    espRosAgent.Cleanup();
 }
 
 void loop()
 {
+
+    if (Serial.available() > 0) 
+    {
+        String command = Serial.readStringUntil('\n');  // Read the command until newline
+        command.trim();  // Remove any whitespace or newline characters
+
+        if (command == "q") 
+        {           
+            Serial.println("------ Shutdown command received. Exiting... -------");
+            cleanup();  // Call the cleanup function
+            while(true);  // Optionally, enter an infinite loop to stop further execution
+        }
+    }
+
     delay(50);
     rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
 }
