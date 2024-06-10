@@ -12,14 +12,15 @@ class OdometryCalculator(Node):
         super().__init__('odometry_calculator')
         self.subscription_wheel1 = self.create_subscription(
             JointState, 
-            'esp/right_wheel_state', 
+            '/esp/right_wheel_state', 
             self.listener_callback_wheel1, 10)
         self.subscription_wheel2 = self.create_subscription(
             JointState, 
-            'esp/left_wheel_state', 
+            '/esp/left_wheel_state', 
             self.listener_callback_wheel2, 10)
         
         self.odom_pub = self.create_publisher(Odometry, 'arsenalServer/odom', 10)
+        self.get_logger().info('Subscriptions and publisher created successfully.')
         self.last_wheel1 = 0.0
         self.last_wheel2 = 0.0
         self.delta_rad1 = 0.0
@@ -32,14 +33,19 @@ class OdometryCalculator(Node):
         self.wheel_radius = 0.1  # radius of the wheel
         self.wheel_base = 0.5    # distance between the wheels
         self.last_time = self.get_clock().now()
+        self.get_logger().info('Odometry Calculator Node started.')
+
+
 
     def listener_callback_wheel1(self, msg):
+        self.get_logger().debug(f'Received right wheel state: position={msg.position}, velocity={msg.velocity}')
         self.delta_rad1 = msg.position - self.last_wheel1
         self.last_wheel1 = msg.position
         self.last_vel1 = msg.velocity
         self.calculate_odometry()
 
     def listener_callback_wheel2(self, msg):
+        self.get_logger().debug(f'Received left wheel state: position={msg.position}, velocity={msg.velocity}')
         self.delta_rad2 = msg.position - self.last_wheel2
         self.last_wheel2 = msg.position
         self.last_vel2 = msg.velocity

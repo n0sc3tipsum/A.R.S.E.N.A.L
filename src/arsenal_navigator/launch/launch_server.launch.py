@@ -21,25 +21,52 @@ def generate_launch_description():
     
     twist_mux_params = os.path.join(get_package_share_directory(package_name),'config','twist_mux.yaml')
     rviz_config_path = os.path.join(pkg_path, 'config/sim_bot.rviz')
-    robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory(package_name),'launch','rsp.launch.py'
                 )]), 
-                launch_arguments={'use_sim_time': 'false', 'use_ros2_control': 'false'}.items()
+                launch_arguments={'use_sim_time': 'false', 'use_ros2_control': 'true'}.items()
+    )
+    twist_mux_params = os.path.join(get_package_share_directory(package_name),'config','twist_mux.yaml')
+    twist_mux = Node(
+            package="twist_mux",
+            executable="twist_mux",
+            parameters=[twist_mux_params],
+            remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
+        )
+
+
+
+    robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
+
+    controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
+
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[{'robot_description': robot_description},
+                    controller_params_file]
+    )
+
+    delayed_controller_manager = TimerAction(period=3.0, actions=[controller_manager])
+
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_cont"],
+    )
+
+    delayed_diff_drive_spawner = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=controller_manager,
+            on_start=[diff_drive_spawner],
+        )
     )
 
     odom_calculator = Node(
             package="arsenal_navigator",
             executable="OdomCalculator"
-    )
-
-    twist_mux = Node(
-            package="twist_mux",
-            executable="twist_mux",
-            parameters=[twist_mux_params, {'use_sim_time': True}],
-            remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
     )
 
     ekf = IncludeLaunchDescription(
@@ -52,6 +79,8 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         twist_mux,
-        odom_calculator,
-        ekf
+        delayed_controller_manager,
+        delayed_diff_drive_spawner
+        #odom_calculator
+        #ekf
     ])
