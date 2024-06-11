@@ -58,8 +58,9 @@ void cleanup()
 void setup()
 {
     Serial.begin(115200);
-    pinMode(TOGGLE_PIN,OUTPUT);
 /*
+    pinMode(TOGGLE_PIN,OUTPUT);
+
     // Try to initialize Accelerometer/Gyroscope
     if (!imu.begin()) 
     {
@@ -74,7 +75,7 @@ void setup()
     imu.setAccelerometerRange(MPU6050_RANGE_2_G);
     imu.setGyroRange(MPU6050_RANGE_250_DEG);
     imu.setFilterBandwidth(MPU6050_BAND_44_HZ);
-*/
+
 
     //Attach motor update ISR to timer to run every STEPPER_INTERVAL_US μs
     if (!ITimer.attachInterruptInterval(STEPPER_INTERVAL_US, TimerHandler)) 
@@ -89,7 +90,7 @@ void setup()
     //pinMode(STEPPER_EN,OUTPUT);
     //digitalWrite(STEPPER_EN, false);
     delay(2000);
-
+*/
     WiFi.begin(espRosAgent._ssid, espRosAgent._pswd);
 
     while (WiFi.status() != WL_CONNECTED) 
@@ -201,4 +202,5 @@ void loop()
     }*/
 
     rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
+    delay(50);
 }
