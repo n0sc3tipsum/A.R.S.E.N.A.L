@@ -4,8 +4,8 @@
 ROSComm::ROSComm()
 {
     _agent_port = 8888;
-    _ssid = "BA36 Hyperoptic 1Gbps Broadband";
-    _pswd = "pkuusr5x";
+    _ssid = "AndroidAP";
+    _pswd = "nvff0137";
     _msg_conf = {0};
  
 }
@@ -73,18 +73,18 @@ void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
 
 }
 
-void ROSComm::CommandCallback(const void *cmd_vel_recv)
+void ROSComm::CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint)
 {
     _cmd_vel_msg = *(geometry_msgs__msg__Twist *) cmd_vel_recv;
 
-    float linear_vel_setpoint = _cmd_vel_msg.linear.x;
-    float angular_vel_setpoint = _cmd_vel_msg.angular.z;
+    *linear_setpoint = _cmd_vel_msg.linear.x;
+    *angular_setpoint = _cmd_vel_msg.angular.z;
     Serial.println("Got Cmd_Vel !");
 
     Serial.print("Linear Velocity Setpoint : ");
-    Serial.println(linear_vel_setpoint);
+    Serial.println(*linear_setpoint);
     Serial.print("Angular Velocity Setpoint : ");
-    Serial.println(angular_vel_setpoint);
+    Serial.println(*angular_setpoint);
     /*Control Integration*/
 }
 
@@ -92,11 +92,12 @@ void ROSComm::CreatePublishers()
 {
     Serial.println("Initialising Publishers...");
 
-    _imu_pub = rcl_get_zero_initialized_publisher();
-    _left_wheel_state_pub = rcl_get_zero_initialized_publisher();
-    _right_wheel_state_pub = rcl_get_zero_initialized_publisher();
-        
-
+    _imu_pub                = rcl_get_zero_initialized_publisher();
+    _left_wheel_state_pub   = rcl_get_zero_initialized_publisher();
+    _right_wheel_state_pub  = rcl_get_zero_initialized_publisher();
+    _batt_lvl_pub           = rcl_get_zero_initialized_publisher();
+    _batt_pwr_pub           = rcl_get_zero_initialized_publisher();
+    
     RCSOFTCHECK(rclc_publisher_init_default(
 		&_imu_pub,
 		&node,
@@ -106,11 +107,19 @@ void ROSComm::CreatePublishers()
 
 
     RCSOFTCHECK(rclc_publisher_init_default(
-		&_batt_state_pub,
+		&_batt_lvl_pub,
 		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
-		"esp/BatteryState"),
-        "Init Battery State Publisher");
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+		"esp/BattLevel"),
+        "Init Battery Level Publisher");
+
+
+    RCSOFTCHECK(rclc_publisher_init_default(
+		&_batt_pwr_pub,
+		&node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+		"esp/BattPwr"),
+        "Init Battery Power Publisher");
 
 
     RCSOFTCHECK(rclc_publisher_init_default(
@@ -144,10 +153,15 @@ void ROSComm::Cleanup()
 {
     RCSOFTCHECK(rclc_executor_fini(&executor), "Shutting Down Executor");
     RCSOFTCHECK(rcl_publisher_fini(&_imu_pub, &node),"Shutting Down Imu Pub");
+
     RCSOFTCHECK(rcl_publisher_fini(&_left_wheel_state_pub, &node),"Shutting Down Left Wheel Pub");
     RCSOFTCHECK(rcl_publisher_fini(&_right_wheel_state_pub, &node),"Shutting Down Right Wheel Pub");
-    RCSOFTCHECK(rcl_publisher_fini(&_batt_state_pub, &node),"Shutting Down Batt State Pub");
+
+    RCSOFTCHECK(rcl_publisher_fini(&_batt_lvl_pub, &node),"Shutting Down Batt lvl Pub");
+    RCSOFTCHECK(rcl_publisher_fini(&_batt_pwr_pub, &node),"Shutting Down Batt pwr Pub");
+
     RCSOFTCHECK(rcl_subscription_fini(&_cmd_vel_sub, &node), "Shutting Down Cmd_vel Sub");
+
     RCSOFTCHECK(rcl_timer_fini(&timer), "Shutting Down Timer");
     RCSOFTCHECK(rcl_node_fini(&node), "Shutting Down ESP Node");
     RCSOFTCHECK(rclc_support_fini(&support), "Shutting Down Support");
@@ -176,6 +190,16 @@ void ROSComm::Cleanup()
                 ROSIDL_GET_MSG_TYPE_SUPPORT(builtin_interfaces, msg, Time),
                 &_time_stamp, _msg_conf), 
                 "De-Alloc Time Stamp Message Memory");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+                &_battery_lvl_msg, _msg_conf),
+                "De-Alloc Battery Level Message");
+
+    RCSOFTCHECK(!micro_ros_utilities_destroy_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+                &_battery_pwr_msg, _msg_conf),
+                "De-Alloc Battery Power Message");
 
 }
 
@@ -207,13 +231,44 @@ void ROSComm::InitMessages()
                 &_time_stamp, _msg_conf), 
                 "Alloc Time Stamp Message Memory");
 
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+                &_battery_pwr_msg, _msg_conf), 
+                "Alloc Bettery Power Message Memory");
 
-    _imu_msg.header.frame_id          = micro_ros_string_utilities_set(_imu_msg.header.frame_id, "imu_frame");
+    RCSOFTCHECK(micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+                &_battery_lvl_msg, _msg_conf), 
+                "Alloc Battery Level Message Memory");
+
+    _battery_lvl_msg.data = 100;
+    _battery_pwr_msg.data = 0.0;
+
+    _imu_msg.header.frame_id  = micro_ros_string_utilities_set(_imu_msg.header.frame_id, "imu_frame");
+    
+    float accel_psd = 400e-6;
+    float accel_bw = 100;
+    float accel_var = (std::pow(accel_psd, 2) * accel_bw) * std::pow(9.81, 2);
+    float gyro_rms = 0.05 * (M_PI / 180.0);
+    float gyro_var = std::pow(gyro_rms, 2);
+
+    for (size_t i = 0; i < 9; ++i) 
+    {
+        _imu_msg.linear_acceleration_covariance[i] = (i % 4 == 0) ? accel_var : 0.0;
+        _imu_msg.angular_velocity_covariance[i] = (i % 4 == 0) ? gyro_var : 0.0;
+        _imu_msg.orientation_covariance[i] = -1.0; // -1 indicates no orientation estimate
+    }
+    
     _lwheel_state_msg.header.frame_id = micro_ros_string_utilities_set(_lwheel_state_msg.header.frame_id, "left_wheel_frame");
     _rwheel_state_msg.header.frame_id = micro_ros_string_utilities_set(_rwheel_state_msg.header.frame_id, "right_wheel_frame");
+	
+    const char *lwheel_name = "left_wheel_joint";
+	const char *rwheel_name = "right_wheel_joint";
 
-    *_lwheel_state_msg.name.data = micro_ros_string_utilities_set(*_lwheel_state_msg.name.data, "left_wheel_joint");
-    *_rwheel_state_msg.name.data = micro_ros_string_utilities_set(*_rwheel_state_msg.name.data, "right_wheel_joint");
+    RCSOFTCHECK(!rosidl_runtime_c__String__assignn(&_lwheel_state_msg.name.data[0], lwheel_name, sizeof(lwheel_name)), "Assign Left Wheel Name");
+    RCSOFTCHECK(!rosidl_runtime_c__String__assignn(&_rwheel_state_msg.name.data[0], rwheel_name, sizeof(rwheel_name)), "Assign Right Wheel Name");
+    /*_lwheel_state_msg.name.data[0] = micro_ros_string_utilities_set(_lwheel_state_msg.name.data[0], "left_wheel_joint");
+    _rwheel_state_msg.name.data[0] = micro_ros_string_utilities_set(_rwheel_state_msg.name.data[0], "right_wheel_joint");*/
 }
 
 void ROSComm::CreateMessages()
@@ -312,10 +367,10 @@ void ROSComm::CreateMessages()
     _rwheel_state_msg.name.capacity=sizeof(rwheel_name);
 	
 }
-void ROSComm::PublishCallback(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
+void ROSComm::PublishCallback(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower)
 {
 
-    getData(lmotor, rmotor, imu);
+    getData(lmotor, rmotor, imu_data, BattLevel, BattPower);
 
     RCSOFTCHECK(rcl_publish(&_left_wheel_state_pub, &_lwheel_state_msg, NULL), 
                 "Publish Left Wheel State");
@@ -324,14 +379,21 @@ void ROSComm::PublishCallback(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
                 "Publish Right Wheel State");
 
     RCSOFTCHECK(rcl_publish(&_imu_pub, &_imu_msg, NULL), 
-                "Publish IMU Data");       
+                "Publish IMU Data");   
 
+    RCSOFTCHECK(rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL), 
+                "Publish Battery Level Data");   
+
+    RCSOFTCHECK(rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL), 
+                "Publish Battery Power Data");  
 }
 
-void ROSComm::getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
+void ROSComm::getData(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower)
 {
-    sensors_event_t a, g, temp;
-    //imu->getEvent(&a, &g, &temp);
+
+    _battery_lvl_msg.data = 99; //BattLevel
+    _battery_pwr_msg.data = 20.5; //BattPower
+
 
     int64_t now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
@@ -340,33 +402,22 @@ void ROSComm::getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
     RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
     "Copy Time TO IMU Message");
 
-    _imu_msg.linear_acceleration.x = 0.02;//a.acceleration.x;
-    _imu_msg.linear_acceleration.y = 0.01; //a.acceleration.y;
-    _imu_msg.linear_acceleration.z = -9.81; //a.acceleration.z;
+    _imu_msg.linear_acceleration.x = 0.02;//imu_data.accel.acceleration.x
+    _imu_msg.linear_acceleration.y = 0.01; //imu_data.accel.acceleration.y;
+    _imu_msg.linear_acceleration.z = -9.81; //imu_data.accel.acceleration.z;
 
-    _imu_msg.angular_velocity.x = 0.0; //g.gyro.x;
-    _imu_msg.angular_velocity.y = 0.0; //g.gyro.y;
-    _imu_msg.angular_velocity.z = 0.5; //g.gyro.z;
-
-    /*_imu_msg->linear_acceleration.x = 0.02;//a.acceleration.x;
-    _imu_msg->linear_acceleration.y = 0.01; //a.acceleration.y;
-    _imu_msg->linear_acceleration.z = -9.81; //a.acceleration.z;
-
-    _imu_msg->angular_velocity.x = 0.0; //g.gyro.x;
-    _imu_msg->angular_velocity.y = 0.0; //g.gyro.y;
-    _imu_msg->angular_velocity.z = 0.5; //g.gyro.z;*/
+    _imu_msg.angular_velocity.x = 0.0; //imu_data.gyro.gyro.x;
+    _imu_msg.angular_velocity.y = 0.0; //imu_data.gyro.gyro.y;
+    _imu_msg.angular_velocity.z = 0.5; //imu_data.gyro.gyro.z;
 
 
-    float lmotor_pos = -1.0; //lmotor->getPositionRad();
-    float lmotor_speed = -3.0; //lmotor->getSpeedRad();
+    double lmotor_pos = -1.0; //lmotor->getPositionRad();
+    double lmotor_speed = -3.0; //lmotor->getSpeedRad();
 
     now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
 
-    /*now = esp_timer_get_time();
-    _time_stamp->sec = now / 1000000;
-    _time_stamp->nanosec = (now % 1000000) * 1000;*/
 
     RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_lwheel_state_msg.header.stamp),
     "Copy Time TO Left Wheel State Message");
@@ -374,16 +425,9 @@ void ROSComm::getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
     _lwheel_state_msg.position.data[0] = lmotor_pos;
     _lwheel_state_msg.velocity.data[0] = lmotor_speed;
 
-    /*_lwheel_state_msg->position.data[0] = lmotor_pos;
-    _lwheel_state_msg->velocity.data[0] = lmotor_speed;*/
-
 
     float rmotor_pos = 1.0; //rmotor->getPositionRad();
     float rmotor_speed = 3.0; //rmotor->getSpeedRad();
-
-    /*now = esp_timer_get_time();
-    _time_stamp->sec = now / 1000000;
-    _time_stamp->nanosec = (now % 1000000) * 1000;/*/
 
     now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
@@ -395,8 +439,6 @@ void ROSComm::getData(step *lmotor, step *rmotor, Adafruit_MPU6050 *imu)
     _rwheel_state_msg.position.data[0] = rmotor_pos;
     _rwheel_state_msg.velocity.data[0] = rmotor_speed;
 
-    /*_rwheel_state_msg->position.data[0] = rmotor_pos;
-    _rwheel_state_msg->velocity.data[0] = rmotor_speed;*/
 }
 
 rosidl_runtime_c__String ROSComm::getFrameId(const char *input)
