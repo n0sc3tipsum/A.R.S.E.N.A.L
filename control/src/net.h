@@ -7,6 +7,7 @@
 extern float tilt;
 extern float setpoint;
 extern float CurrSpeed;
+extern float SetSpeed;
 
 // Function declarations
 void setupNetwork(const char* ssid, const char* password);
@@ -46,8 +47,8 @@ void handleRoot() {
 void handleSet() {
     Serial.println("Received request to update setpoint"); // Debugging statement
     if (server.hasArg("set")) {
-        setpoint = server.arg("set").toFloat();
-        Serial.println("Updated setpoint to: " + String(setpoint)); // Debugging statement
+        SetSpeed = server.arg("set").toFloat();
+        Serial.println("Updated setpoint to: " + String(SetSpeed)); // Debugging statement
         server.send(200, "text/plain", "Setpoint updated");
     } else {
         Serial.println("Invalid setpoint value received"); // Debugging statement

@@ -10,4 +10,6 @@ float LPF(float current, float prev, float AlphaLPF){
     return AlphaLPF * current + (1- AlphaLPF) * prev;
 }
 
+
+
 #endif

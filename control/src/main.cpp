@@ -101,22 +101,26 @@ void loop()
   
   // loop for outer loop
 
-  if (millis() > SpeedTimer){
-    SpeedTimer += SPEED_INTERVAL;
-    GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
-    CurrSpeed = LPF(GetSpeed, CurrSpeed, 0.1);
-    SpeedError = SetSpeed - CurrSpeed;
+  // if (millis() > SpeedTimer){
+  //   sensors_event_t a, g, temp;
+  //   mpu.getEvent(&a, &g, &temp);
+
+  //   SpeedTimer += SPEED_INTERVAL;
+  //   GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+  //   CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
+  //   SpeedError = SetSpeed - CurrSpeed;
 
 
-    derivative = (CurrSpeed - PreviousSpeed) / dt;
+  //   SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
+  //   SpeedIntegral += SpeedError* dtSpeed;
 
 
 
+  //   setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed * SpeedIntegral)-0.04;
+  //   PreviousSpeedError = SpeedError;
+  //   PreviousSpeed = CurrSpeed;
 
-    setpoint = SpeedError * KpSpeed + derivative*KdSpeed-0.0375;
-    PreviousSpeed = CurrSpeed;
-
-  }
+  // }
 
 
   //loop  for the inner loop
@@ -127,20 +131,41 @@ void loop()
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 
-    //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
+
+    GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+    CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
+    SpeedError = SetSpeed - CurrSpeed;
+
+
+    SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
+    SpeedIntegral += SpeedError* dt;
+
+
+
+    setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral)-0.04;
+    PreviousSpeedError = SpeedError;
+    PreviousSpeed = CurrSpeed;
+
+
+    
+
+    // //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
     accelTilt = a.acceleration.z/9.67;
     gyroRate = g.gyro.y;
+
+    // if (abs(gyroRate) < 0.05){
+    //   gyroRate = 0.0;
+    // }
 
 
     tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
     error = setpoint - tilt;
 
     integral += error *dt;
-    derivative = (error - PreviousError)/ dt;
 
-    PIDout = error * Kp - gyroRate*Kd + integral * Ki;
+    // derivative = (error - PreviousError) / dt;
 
-    
+    PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
     step1.setAccelerationRad(PIDout);
     step2.setAccelerationRad(PIDout);
     if (PIDout < 0){
@@ -157,13 +182,13 @@ void loop()
     PreviousError = error;
   }
   
-  server.handleClient();
-  //Print updates every PRINT_INTERVAL ms
+  // Print updates every PRINT_INTERVAL ms
   if (millis() > printTimer) {
+    server.handleClient();
     printTimer += PRINT_INTERVAL;
-    Serial.print(printTimer);
-    Serial.print(" ");
-    Serial.println(setpoint);
+    // Serial.print(printTimer);
+    // Serial.print(" ");
+    // Serial.println(AccelRaw);
 
   }
 }

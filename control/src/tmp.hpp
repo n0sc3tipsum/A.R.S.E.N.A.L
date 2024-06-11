@@ -1,8 +1,15 @@
+// libraries or packages used
 #include <Arduino.h>
 #include <TimerInterrupt_Generic.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <step.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <net.h>
+#include <constant.h>
+#include <filter.h>
+
 
 // The Stepper pins
 #define STEPPER1_DIR_PIN 16   //Arduino D9
@@ -14,40 +21,6 @@
 // Diagnostic pin for oscilloscope
 #define TOGGLE_PIN  32        //Arduino A4
 
-const int PRINT_INTERVAL = 500;
-const int LOOP_INTERVAL = 10;
-const int  STEPPER_INTERVAL_US = 20;
-
-// complementary filter
-float dt = LOOP_INTERVAL / 1000.0;
-float alpha = 0.98; // complementary filter coefficient
-float accelTilt = 0.0;
-// float integralThreshold = 0.5;
-
-// PID constant for tilt
-const float Kp = 980;
-const float Ki = 5.0;
-const float Kd = 20.0;
-
-// PID for tilt angle
-float setpoint = 0.15; // desired tilted angle (upright)
-float tilt = 0.0; // current tilt
-float gyroRate = 0.0;
-float prevTilt = 0.0; //previous tilt for derivative measurement
-float integral = 0.0; // integral term
-float derivative = 0.0; // derivative term
-float error = 0.0;
-float PIDout = 0.0;
-
-// PID constant for speed
-const float KpSpeed = 0.001;
-
-//PID for speed
-float SetSpeed = 0.0; // desired speed
-float SpeedError = 0.0; // the error on the speed 
-float CurrSpeed = 0.0;
-float PrevPos = 0.0;
-float CurrPos = 0.0;
 
 
 //Global objects
@@ -57,11 +30,10 @@ Adafruit_MPU6050 mpu;         //Default pins for I2C are SCL: IO22/Arduino D3, S
 step step1(STEPPER_INTERVAL_US,STEPPER1_STEP_PIN,STEPPER1_DIR_PIN );
 step step2(STEPPER_INTERVAL_US,STEPPER2_STEP_PIN,STEPPER2_DIR_PIN );
 
-
-// function for lowpass filtering speed
-float LPF (float curr, float prev, float coeff){
-    return coeff * curr + (1-coeff) * prev;
-}
+// filtering sensor readings through fusion
+// float CompFilter(float accel, float gyro, float coeff, float prev){
+//     return coeff * (prev + gyro * dt) + (1-coeff) *accel;
+// }
 
 
 //Interrupt Service Routine for motor update
@@ -98,6 +70,11 @@ void setup()
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
 
+
+  //initialize the network
+  // setupNetwork(ssid, password);
+
+
   //Attach motor update ISR to timer to run every STEPPER_INTERVAL_US μs
   if (!ITimer.attachInterruptInterval(STEPPER_INTERVAL_US, TimerHandler)) {
     Serial.println("Failed to start stepper interrupt");
@@ -112,7 +89,6 @@ void setup()
   //Enable the stepper motor drivers
   pinMode(STEPPER_EN,OUTPUT);
   digitalWrite(STEPPER_EN, false);
-
 }
 
 void loop()
@@ -120,9 +96,36 @@ void loop()
   //Static variables are initialised once and then the value is remembered betweeen subsequent calls to this function
   static unsigned long printTimer = 0;  //time of the next print
   static unsigned long loopTimer = 0;   //time of the next control update
+  static unsigned long SpeedTimer = 0;
   // static float tiltx = 0.0;             //current tilt angle
   
-  //Run the control loop every LOOP_INTERVAL ms
+  // loop for outer loop
+
+  // if (millis() > SpeedTimer){
+  //   sensors_event_t a, g, temp;
+  //   mpu.getEvent(&a, &g, &temp);
+
+  //   SpeedTimer += SPEED_INTERVAL;
+  //   // GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+  //   // CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.01);
+  //   AccelRaw = a.acceleration.z;
+  //   CurrSpeed += GetSpeed * dtSpeed;
+  //   SpeedError = SetSpeed - CurrSpeed;
+
+
+  //   SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
+  //   SpeedIntegral += SpeedError* dtSpeed;
+
+
+
+  //   setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed)-0.035;
+  //   PreviousSpeedError = SpeedError;
+  //   PreviousSpeed = CurrSpeed;
+
+  // }
+
+
+  //loop  for the inner loop
   if (millis() > loopTimer) {
     loopTimer += LOOP_INTERVAL;
 
@@ -130,53 +133,41 @@ void loop()
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 
+
+    GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+    CurrSpeed = GetSpeed;
+    
+    SpeedError = SetSpeed - CurrSpeed;
+    SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
+    SpeedIntegral += SpeedError* dt;
+
+
+
+    setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed+SpeedIntegral*KiSpeed)-0.03;
+    PreviousSpeedError = SpeedError;
+    PreviousSpeed = CurrSpeed;
+
+    
+
     //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-    // tiltx = a.acceleration.z/9.67; 
-    // accelTilt = 90- atan2(a.acceleration.x, a.acceleration.z) * 180 / PI;
     accelTilt = a.acceleration.z/9.67;
-    gyroRate = g.gyro.pitch;
+    gyroRate = g.gyro.y;
+
+    // if (abs(gyroRate) < 0.05){
+    //   gyroRate = 0.0;
+    // }
 
 
-
-    // CurrPos = (step1.getPositionRad() + step2.getPositionRad())/2;
-
-    CurrSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/ 2;
-
-    SpeedError = LPF(CurrSpeed, PrevPos, 0.5);
-
-    // setpoint = SpeedError * KpSpeed -0.03; 
-
-
-
-
-    tilt = alpha * (tilt + gyroRate * dt) + (1 - alpha) * accelTilt;
+    tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
     error = setpoint - tilt;
-    if (error == 0){
-      integral = 0.0;
-    }
 
-    
-    integral += error * dt;
-    
+    integral += error *dt;
 
-    derivative = (error - prevTilt)/ dt;
+    // derivative = (error - PreviousError) / dt;
 
-
-
-    PIDout = error * Kp + derivative*Kd + integral*Ki;
-
-    //Set target motor speed proportional to tilt angle
-    //Note: this is for demonstrating accelerometer and motors - it won't work as a balance controller
-
-    
+    PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
     step1.setAccelerationRad(PIDout);
     step2.setAccelerationRad(PIDout);
-
-    // IntegratedSpeed += PIDout * dt;
-
-    // if (abs(IntegratedSpeed) > 10 ){
-    //   IntegratedSpeed = 0;
-    // }
     if (PIDout < 0){
       step1.setTargetSpeedRad(-20);
       step2.setTargetSpeedRad(-20);
@@ -188,22 +179,16 @@ void loop()
     step2.setTargetSpeedRad(20);
 
     }
-
-    step1.runStepper();
-    step2.runStepper();
-    // step1.runStepper();
-    // step2.runStepper();
-    
-    PrevPos = CurrSpeed;
-    prevTilt = error;
+    PreviousError = error;
   }
   
-  // //Print updates every PRINT_INTERVAL ms
+  // server.handleClient();
+  // Print updates every PRINT_INTERVAL ms
   if (millis() > printTimer) {
     printTimer += PRINT_INTERVAL;
-    Serial.print(tilt);
+    Serial.print(printTimer);
     Serial.print(" ");
-    Serial.print(SpeedError);
-    Serial.println();
+    Serial.println(AccelRaw);
+
   }
 }

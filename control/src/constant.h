@@ -4,23 +4,24 @@
 
 const int PRINT_INTERVAL = 500;
 const int LOOP_INTERVAL = 10;
-const int SPEED_INTERVAL = 30;
+const int SPEED_INTERVAL = 50;
 const int ROTATION_INVERVAL = 1;
 const int  STEPPER_INTERVAL_US = 20;
 
 // complementary filter
 float dt = LOOP_INTERVAL / 1000.0;
-float alpha = 0.98; // complementary filter coefficient
+float dtSpeed = SPEED_INTERVAL / 1000.0;
+float alpha = 0.98; // complementary filter coefficient prev  values = 0.98
 float accelTilt = 0.0;
 // float integralThreshold = 0.5;
 
 // PID constant for tilt
-const float Kp = 500;
-const float Ki = 5.0;
-const float Kd = 150.0;
+const float Kp = 1500;  //500 600 700 try: 2000 1500 1800 1700
+const float Ki = 0.0;  // 5 25
+const float Kd = 50.0; // 15 200 10 30
 
 // PID for tilt angle
-float setpoint = -0.0375; // desired tilted angle (upright)
+float setpoint = -0.04; // desired tilted angle (upright) -0.0375
 float tilt = 0.0; // current tilt
 float gyroRate = 0.0;
 float PreviousError = 0.0; //previous tilt for derivative measurement
@@ -30,17 +31,23 @@ float error = 0.0;
 float PIDout = 0.0;
 
 // PID constant for speed
-const float KpSpeed = 0.005;
-const float KiSpeed = 0.005;
-const float KdSpeed = 0.0006;
+const float KpSpeed = 0.0035; // try 0.5
+const float KdSpeed = 0.0002; // try 0.0002
+const float KiSpeed = 0.002;
 
 //PID for speed
 float SetSpeed = 0.0; // desired speed
 float SpeedError = 0.0; // the error on the speed 
 float CurrSpeed = 0.0;
+float PreviousSpeedError = 0.0;
 float PreviousSpeed = 0.0;
-float SpeedDerivative = 0.0;
 float GetSpeed = 0.0;
+float SpeedDerivative = 0.0;
+float SpeedIntegral = 0.0;
+
+//velocity constnat
+
+float AccelRaw = 0.0;
 
 
 // netcode holder
