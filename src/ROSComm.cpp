@@ -4,8 +4,8 @@
 ROSComm::ROSComm()
 {
     _agent_port = 8888;
-    _ssid = "BA36 Hyperoptic 1Gbps Broadband";
-    _pswd = "pkuusr5x";
+    _ssid = "Yep";
+    _pswd = "Yepyepyep";
     _msg_conf = {0};
  
 }
@@ -34,14 +34,14 @@ void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
     
 
     // Initialize rclc support object with custom options
-    RCSOFTCHECK(rclc_support_init_with_options(
+    /*RCSOFTCHECK(rclc_support_init_with_options(
         &support, 
         0, 
         NULL, 
         &init_options, 
         &allocator), 
-        "Init Support Object");
-    //RCSOFTCHECK(rclc_support_init(&support, 0, NULL, &allocator), "Init Default SUpport");
+        "Init Support Object");*/
+    RCSOFTCHECK(rclc_support_init(&support, 0, NULL, &allocator), "Init Default SUpport");
 
 
     // Init node with configured support object
@@ -393,16 +393,21 @@ void ROSComm::CreateMessages()
     _rwheel_state_msg.name.capacity=sizeof(rwheel_name);*/
 	
 }
-void ROSComm::PublishCallback(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower)
+void ROSComm::PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower)
 {
 
-    getData(lmotor, rmotor, imu_data, BattLevel, BattPower);
-
+    getData(motor_data, imu_data, BattLevel, BattPower);
+    rcl_ret_t rc;
+    rc += rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL);
+    rc += rcl_publish(&_imu_pub, &_imu_msg, NULL);
+    rc += rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL);
+    rc += rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL);
+    /*
     RCSOFTCHECK(rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL), 
                 "Publish Joint State Data");
 
     /*RCSOFTCHECK(rcl_publish(&_right_wheel_state_pub, &_rwheel_state_msg, NULL), 
-                "Publish Right Wheel State");*/
+                "Publish Right Wheel State");
 
     RCSOFTCHECK(rcl_publish(&_imu_pub, &_imu_msg, NULL), 
                 "Publish IMU Data");   
@@ -411,12 +416,12 @@ void ROSComm::PublishCallback(step *lmotor, step *rmotor, imu_data_t &imu_data, 
                 "Publish Battery Level Data");   
 
     RCSOFTCHECK(rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL), 
-                "Publish Battery Power Data");  
+                "Publish Battery Power Data");  */
 }
 
-void ROSComm::getData(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower)
+void ROSComm::getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower)
 {
-
+    bool succ;
     _battery_lvl_msg.data = 99; //BattLevel
     _battery_pwr_msg.data = 20.5; //BattPower
 
@@ -424,35 +429,36 @@ void ROSComm::getData(step *lmotor, step *rmotor, imu_data_t &imu_data, int Batt
     int64_t now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
+    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp);
 
-    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
-    "Copy Time TO IMU Message");
+    /*RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
+    "Copy Time TO IMU Message");*/
 
-    _imu_msg.linear_acceleration.x = 0.02;//imu_data.accel.acceleration.x
-    _imu_msg.linear_acceleration.y = 0.01; //imu_data.accel.acceleration.y;
-    _imu_msg.linear_acceleration.z = -9.81; //imu_data.accel.acceleration.z;
+    _imu_msg.linear_acceleration.x = imu_data->accel.acceleration.x;
+    _imu_msg.linear_acceleration.y = imu_data->accel.acceleration.y;
+    _imu_msg.linear_acceleration.z = imu_data->accel.acceleration.z;
 
-    _imu_msg.angular_velocity.x = 0.0; //imu_data.gyro.gyro.x;
-    _imu_msg.angular_velocity.y = 0.0; //imu_data.gyro.gyro.y;
-    _imu_msg.angular_velocity.z = 0.5; //imu_data.gyro.gyro.z;
+    _imu_msg.angular_velocity.x = imu_data->gyro.gyro.x;
+    _imu_msg.angular_velocity.y = imu_data->gyro.gyro.y;
+    _imu_msg.angular_velocity.z = imu_data->gyro.gyro.z;
 
 
-    double lmotor_pos = -1.0; //lmotor->getPositionRad();
-    double lmotor_speed = -3.0; //lmotor->getSpeedRad();
-    float rmotor_pos = 1.0; //rmotor->getPositionRad();
-    float rmotor_speed = 3.0; //rmotor->getSpeedRad();
+    /*double lmotor_pos = lmotor->getPositionRad();
+    double lmotor_speed = lmotor->getSpeedRad();
+    float rmotor_pos = rmotor->getPositionRad();
+    float rmotor_speed = rmotor->getSpeedRad();*/
 
     now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
+    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_joint_states_msg.header.stamp);
+    /*RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_joint_states_msg.header.stamp),
+    "Copy Time TO Left Wheel State Message");*/
 
-    RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_joint_states_msg.header.stamp),
-    "Copy Time TO Left Wheel State Message");
-
-    _joint_states_msg.position.data[0] = lmotor_pos;
-    _joint_states_msg.velocity.data[0] = lmotor_speed;
-    _joint_states_msg.position.data[1] = rmotor_pos;
-    _joint_states_msg.velocity.data[1] = rmotor_speed;
+    _joint_states_msg.position.data[0] = motor_data->left_pos;
+    _joint_states_msg.velocity.data[0] = motor_data->left_speed;
+    _joint_states_msg.position.data[1] = motor_data->right_pos;
+    _joint_states_msg.velocity.data[1] = motor_data->right_speed;
 
 }
 

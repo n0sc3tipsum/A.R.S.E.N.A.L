@@ -24,12 +24,12 @@
     // float integralThreshold = 0.5;
 
     // PID constant for tilt
-    const float Kp = 1500;  //500 600 700 try: 2000 1500 1800 1700
+    const float Kp = 4000;  //500 600 700 try: 2000 1500 1800 1700
     const float Ki = 0.0;  // 5 25
-    const float Kd = 50.0; // 15 200 10 30
+    const float Kd = 25.0; // 15 200 10 30
 
     // PID for tilt angle
-    float setpoint = -0.04; // desired tilted angle (upright) -0.0375
+    float setpoint = 0.01; // desired tilted angle (upright) -0.0375
     float tilt = 0.0; // current tilt
     float gyroRate = 0.0;
     float PreviousError = 0.0; //previous tilt for derivative measurement
@@ -44,7 +44,7 @@
     const float KiSpeed = 0.002;
 
     //PID for speed
-    //float SetSpeed = 0.0; // desired speed
+    float SetSpeed = 0.0; // desired speed
     float SpeedError = 0.0; // the error on the speed 
     float CurrSpeed = 0.0;
     float PreviousSpeedError = 0.0;
@@ -64,7 +64,7 @@
     //rotational control (probably not needed)
     float gyrox = 0.0;
     float RotateP = 1;
-    //float RotationSetpoint = 0.0;
+    float RotationSetpoint = 0.0;
     float RotationControl = 0.0;
 
 

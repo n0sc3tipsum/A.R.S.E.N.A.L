@@ -12,18 +12,20 @@
 #include "ROSComm.h"
 #include "step.h"
 
-float *RotationSetpoint;
-float *SetSpeed;
+/*float *RotationSetpoint;
+float *SetSpeed;*/
 step left_motor  = step(STEPPER_INTERVAL_US, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
 step right_motor = step(STEPPER_INTERVAL_US, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
 
-imu_data_t *imu_data; 
+
 Adafruit_MPU6050 imu;
 Battery batt;
 ROSComm espRosAgent;
 
 ESP32Timer ITimer(3);
 
+imu_data_t imu_data; 
+motor_data_t motor_data;
 //Interrupt Service Routine for motor update
 //Note: ESP32 doesn't support floating point calculations in an ISR
 bool TimerHandler(void * timerNo)
@@ -42,14 +44,14 @@ bool TimerHandler(void * timerNo)
 
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
-    Serial.println("");
-    espRosAgent.PublishCallback(&left_motor, &right_motor, *imu_data, batt.BatteryLevel, batt.TotalPower);
-    Serial.println("");
+    //Serial.println("");
+    espRosAgent.PublishCallback(&motor_data, &imu_data, batt.BatteryLevel, batt.TotalPower);
+    //Serial.println("");
 }
 
 void cmd_vel_sub_callback(const void *msgin)
 {
-    espRosAgent.CommandCallback(msgin, RotationSetpoint, SetSpeed);
+    espRosAgent.CommandCallback(msgin, &RotationSetpoint, &SetSpeed);
 }
 
 void cleanup()
@@ -62,7 +64,7 @@ void cleanup()
 void setup()
 {
     Serial.begin(115200);
-/*
+
     pinMode(TOGGLE_PIN,OUTPUT);
 
     // Try to initialize Accelerometer/Gyroscope
@@ -91,10 +93,9 @@ void setup()
 
  
     //Enable the stepper motor drivers
-    //pinMode(STEPPER_EN,OUTPUT);
-    //digitalWrite(STEPPER_EN, false);
+    pinMode(STEPPER_EN,OUTPUT);
+    digitalWrite(STEPPER_EN, false);
     delay(2000);
-*/
     WiFi.begin(espRosAgent._ssid, espRosAgent._pswd);
 
     while (WiFi.status() != WL_CONNECTED) 
@@ -103,7 +104,7 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,1,100);
+    espRosAgent._agent_ip = IPAddress(192,168,254,205);
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
@@ -137,10 +138,10 @@ void setup()
 
 void loop()
 {
-    static unsigned long printTimer = 0;  //time of the next print
+    //static unsigned long printTimer = 0;  //time of the next print
     static unsigned long loopTimer = 0;   //time of the next control update
 
-    if (Serial.available() > 0) 
+    /*if (Serial.available() > 0) 
     {
         String command = Serial.readStringUntil('\n');  // Read the command until newline
         command.trim();  // Remove any whitespace or newline characters
@@ -153,32 +154,35 @@ void loop()
             cleanup();  // Call the cleanup function
             while(true);  // Optionally, enter an infinite loop to stop further execution
         }
-    }
+    }*/
 
-    /*if (millis() > loopTimer) 
+    if (millis() > loopTimer) 
     {
         loopTimer += LOOP_INTERVAL;
 
         // Fetch data from MPU6050
-        imu.getEvent(&imu_data->accel, &imu_data->gyro, &imu_data->temp);
+        imu.getEvent(&imu_data.accel, &imu_data.gyro, &imu_data.temp);
+        motor_data.left_pos = left_motor.getPositionRad();
+        motor_data.left_speed = left_motor.getSpeedRad();
+        motor_data.right_pos = right_motor.getPositionRad();
+        motor_data.right_speed = right_motor.getSpeedRad();
+        // GetSpeed = (left_motor.getSpeedRad() + left_motor.getSpeedRad())/2;
+        // CurrSpeed = LPF(GetSpeed, PreviousSpeed, 0.2);
+        // SpeedError = SetSpeed - CurrSpeed;
 
-        GetSpeed = (left_motor.getSpeedRad() + left_motor.getSpeedRad())/2;
-        CurrSpeed = LPF(GetSpeed, PreviousSpeed, 0.2);
-        SpeedError = *SetSpeed - CurrSpeed;
+
+        // SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
+        // SpeedIntegral += SpeedError* dt;
 
 
-        SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
-        SpeedIntegral += SpeedError* dt;
-
-
-        setpoint           = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral)-0.04;
-        PreviousSpeedError = SpeedError;
-        PreviousSpeed      = CurrSpeed;
+        // setpoint           = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral)-0.04;
+        // PreviousSpeedError = SpeedError;
+        // PreviousSpeed      = CurrSpeed;
     
 
         //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-        accelTilt = imu_data->accel.acceleration.z/9.67;
-        gyroRate  = imu_data->gyro.gyro.y;
+        accelTilt = imu_data.accel.acceleration.z/9.67 - 0.09;
+        gyroRate  = imu_data.gyro.gyro.y;
 
 
         tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
@@ -204,9 +208,9 @@ void loop()
 
         PreviousError = error;
 
-        batt.getBatteryState();
-    }*/
+        //batt.getBatteryState();
+    }
 
-    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
-    delay(50);
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(50));
+    //delay(50);
 }

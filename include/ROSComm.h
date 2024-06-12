@@ -44,6 +44,14 @@ typedef struct
 
 }imu_data_t;
 
+typedef struct
+{
+    float left_speed;
+    float left_pos;
+    float right_speed;
+    float right_pos;
+}motor_data_t;
+
 class ROSComm
 {
 public:
@@ -52,13 +60,13 @@ public:
 
     void Init(IPAddress agent__ip = IPAddress(191, 165, 28,0), size_t agent_port = 0);
     void CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint);
-    void PublishCallback(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower);
+    void PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower);
     void CreatePublishers();
     void CreateSubscribers();
     void CreateMessages();
     void Cleanup();
     void InitMessages();
-    void getData(step *lmotor, step *rmotor, imu_data_t &imu_data, int BattLevel, int BattPower);
+    void getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower);
 
     rosidl_runtime_c__String getFrameId(const char *input);
     
