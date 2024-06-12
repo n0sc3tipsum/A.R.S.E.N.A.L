@@ -104,7 +104,7 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,254,205);
+    espRosAgent._agent_ip = IPAddress(192,168,254,205); //Set this to your desktop IP
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
@@ -211,6 +211,6 @@ void loop()
         //batt.getBatteryState();
     }
 
-    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(25));
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(10));
     //delay(50);
 }
