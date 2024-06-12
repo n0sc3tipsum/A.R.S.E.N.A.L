@@ -42,7 +42,9 @@ bool TimerHandler(void * timerNo)
 
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
+    Serial.println("");
     espRosAgent.PublishCallback(&left_motor, &right_motor, *imu_data, batt.BatteryLevel, batt.TotalPower);
+    Serial.println("");
 }
 
 void cmd_vel_sub_callback(const void *msgin)
@@ -53,6 +55,8 @@ void cmd_vel_sub_callback(const void *msgin)
 void cleanup()
 {
     espRosAgent.Cleanup();
+    Serial.println("");
+    Serial.println("---- Clean Up Complete ----");
 }
 
 void setup()
@@ -99,16 +103,16 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,191,78);
+    espRosAgent._agent_ip = IPAddress(192,168,1,100);
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
 
-    *RotationSetpoint = 0.0;
-    *SetSpeed = 0.0;
+    //*RotationSetpoint = 0.0;
+    //*SetSpeed = 0.0;
     espRosAgent.Init();
 
-    const unsigned int timer_timeout = 500;
+    const unsigned int timer_timeout = 1000;
 
     RCSOFTCHECK(rclc_timer_init_default(
                 &espRosAgent.timer,
@@ -143,7 +147,9 @@ void loop()
 
         if (command == "q") 
         {           
+            Serial.println("");
             Serial.println("------ Shutdown command received. Exiting... -------");
+            Serial.println("");
             cleanup();  // Call the cleanup function
             while(true);  // Optionally, enter an infinite loop to stop further execution
         }

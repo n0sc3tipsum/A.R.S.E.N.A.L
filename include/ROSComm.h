@@ -75,9 +75,9 @@ public:
     rclc_support_t   support;
     rcl_timer_t      timer;
     
-    rcl_publisher_t _left_wheel_state_pub;
-    rcl_publisher_t _right_wheel_state_pub;
-
+    //rcl_publisher_t _left_wheel_state_pub;
+    //rcl_publisher_t _right_wheel_state_pub;
+    rcl_publisher_t _joint_state_pub;
     rcl_publisher_t _imu_pub;
     rcl_publisher_t _batt_lvl_pub;
     rcl_publisher_t _batt_pwr_pub;
@@ -88,11 +88,11 @@ public:
  
     builtin_interfaces__msg__Time   _time_stamp;
     sensor_msgs__msg__Imu           _imu_msg;
-    sensor_msgs__msg__JointState    _lwheel_state_msg;
-    sensor_msgs__msg__JointState    _rwheel_state_msg;
+    //sensor_msgs__msg__JointState    _lwheel_state_msg;
+    //sensor_msgs__msg__JointState    _rwheel_state_msg;
     std_msgs__msg__Int32            _battery_pwr_msg;
     std_msgs__msg__Int32            _battery_lvl_msg;
-
+    sensor_msgs__msg__JointState    _joint_states_msg;
     micro_ros_utilities_memory_conf_t _msg_conf;
 };
 
