@@ -187,7 +187,7 @@ void loop()
 
         tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
         error = setpoint - tilt;
-
+        imu_data.accel.acceleration.y = tilt;
         integral += error *dt;
 
         PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
@@ -211,6 +211,6 @@ void loop()
         //batt.getBatteryState();
     }
 
-    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(50));
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(25));
     //delay(50);
 }
