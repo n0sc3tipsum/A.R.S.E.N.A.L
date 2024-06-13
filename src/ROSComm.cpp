@@ -150,7 +150,7 @@ void ROSComm::CreateSubscribers()
         &_cmd_vel_sub,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/cmd_vel"),
+        "/diff_cont/cmd_vel_unstamped"),
         "Init cmd_vel Subscriber");
 }
 
