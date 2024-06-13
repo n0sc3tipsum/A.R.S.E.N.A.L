@@ -131,7 +131,7 @@ void ROSComm::CreatePublishers()
         &_joint_state_pub,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
-        "esp/joint_states"),
+        "esp/wheel_states"),
         "Init Joint State Publisher");
 
     /*RCSOFTCHECK(rclc_publisher_init_default(
