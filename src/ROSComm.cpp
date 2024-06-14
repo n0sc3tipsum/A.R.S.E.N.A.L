@@ -10,7 +10,7 @@ ROSComm::ROSComm()
  
 }
 
-void ROSComm::Init(IPAddress agent_ip, size_t agent_port, bool use_kinematic_control)
+void ROSComm::Init(bool use_kinematic_control)
 {
     Serial.println("Setting micro-ROS wifi transports");
     _kin_en = use_kinematic_control;
@@ -428,9 +428,9 @@ void ROSComm::PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, in
     getData(motor_data, imu_data, BattLevel, BattPower);
     rcl_ret_t rc;
     rc += rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL);
-    rc += rcl_publish(&_imu_pub, &_imu_msg, NULL);
-    rc += rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL);
-    rc += rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL);
+    //rc += rcl_publish(&_imu_pub, &_imu_msg, NULL);
+    /*rc += rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL);
+    rc += rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL);*/
     /*
     RCSOFTCHECK(rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL), 
                 "Publish Joint State Data");
@@ -451,25 +451,25 @@ void ROSComm::PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, in
 void ROSComm::getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower)
 {
     bool succ;
-    _battery_lvl_msg.data = 99; //BattLevel
+    /*_battery_lvl_msg.data = 99; //BattLevel
     _battery_pwr_msg.data = 20.5; //BattPower
 
 
     int64_t now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
-    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp);
+    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp);*/
 
     /*RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
     "Copy Time TO IMU Message");*/
 
-    _imu_msg.linear_acceleration.x = imu_data->accel.acceleration.x;
+    /*_imu_msg.linear_acceleration.x = imu_data->accel.acceleration.x;
     _imu_msg.linear_acceleration.y = imu_data->accel.acceleration.y;
     _imu_msg.linear_acceleration.z = imu_data->accel.acceleration.z;
 
     _imu_msg.angular_velocity.x = imu_data->gyro.gyro.x;
     _imu_msg.angular_velocity.y = imu_data->gyro.gyro.y;
-    _imu_msg.angular_velocity.z = imu_data->gyro.gyro.z;
+    _imu_msg.angular_velocity.z = imu_data->gyro.gyro.z;*/
 
 
     /*double lmotor_pos = lmotor->getPositionRad();
@@ -477,7 +477,7 @@ void ROSComm::getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLe
     float rmotor_pos = rmotor->getPositionRad();
     float rmotor_speed = rmotor->getSpeedRad();*/
 
-    now = esp_timer_get_time();
+    int64_t now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
     succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_joint_states_msg.header.stamp);

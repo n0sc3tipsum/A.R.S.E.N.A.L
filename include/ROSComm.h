@@ -58,7 +58,7 @@ public:
 
     ROSComm();
 
-    void Init(IPAddress agent__ip = IPAddress(191, 165, 28,0), size_t agent_port = 0, bool use_kinematic_control = true);
+    void Init(bool use_kinematic_control);
     void CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint);
     void KinematicCommandCallback(const void *kin_cmd_vel_recv, double *left_motor_vel, double *right_motor_vel);
 

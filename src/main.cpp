@@ -72,7 +72,7 @@ void setup()
     Serial.begin(115200);
 
     pinMode(TOGGLE_PIN,OUTPUT);
-    bool use_kinematic_control = true;
+    bool use_kinematic_control = false;
     left_motor_speed = 0.0;
     right_motor_speed = 0.0;
 
@@ -134,8 +134,7 @@ void setup()
                 timer_callback), 
                 "Init Timer");
 
-    RCSOFTCHECK(rclc_executor_add_timer(&espRosAgent.executor, &espRosAgent.timer), 
-                "Add Timer To Executor");
+
 
     if (espRosAgent._kin_en)
     {
@@ -156,6 +155,8 @@ void setup()
             "Create cmd_vel Subscription");
     }
 
+    RCSOFTCHECK(rclc_executor_add_timer(&espRosAgent.executor, &espRosAgent.timer), 
+                "Add Timer To Executor");
 }
 
 
@@ -245,6 +246,5 @@ void loop()
         //batt.getBatteryState();
     }
 
-    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(1000));
-    delay(100);
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
 }
