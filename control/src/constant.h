@@ -2,7 +2,7 @@
 #define CONSTANT_H
 
 
-const int PRINT_INTERVAL = 500;
+const int PRINT_INTERVAL = 100;
 const int LOOP_INTERVAL = 10;
 const int SPEED_INTERVAL = 50;
 const int ROTATION_INVERVAL = 1;
@@ -16,12 +16,12 @@ float accelTilt = 0.0;
 // float integralThreshold = 0.5;
 
 // PID constant for tilt
-const float Kp = 1500;  //500 600 700 try: 2000 1500 1800 1700
+const float Kp = 1800;  //500 600 700 try: 2000 1500 1800 1700
 const float Ki = 0.0;  // 5 25
-const float Kd = 50.0; // 15 200 10 30
+const float Kd = 20.0; // 15 200 10 30
 
 // PID for tilt angle
-float setpoint = -0.04; // desired tilted angle (upright) -0.0375
+float setpoint = 0.0; // desired tilted angle (upright) -0.0375
 float tilt = 0.0; // current tilt
 float gyroRate = 0.0;
 float PreviousError = 0.0; //previous tilt for derivative measurement
@@ -31,8 +31,8 @@ float error = 0.0;
 float PIDout = 0.0;
 
 // PID constant for speed
-const float KpSpeed = 0.0035; // try 0.5
-const float KdSpeed = 0.0002; // try 0.0002
+const float KpSpeed = 0.002; // try 0.5
+const float KdSpeed = 0.0; // try 0.0002
 const float KiSpeed = 0.002;
 
 //PID for speed
@@ -55,9 +55,13 @@ const char* ssid = "AndroidAP";
 const char* password = "nvff0137";
 
 //rotational control (probably not needed)
- float gyrox = 0.0;
- float RotateP = 1;
- const float RotationSetpoint = 0.0;
+ float RotationSetpoint = 0.0;
+ float RotationError = 0.0;
+ float RotationIntegral = 0.0;
+ float gyroX = 0.0;
+ const float RotateP = 3;
+ const float RotateI = 0.0;
+
  float RotationControl = 0.0;
 
 

@@ -30,12 +30,6 @@ Adafruit_MPU6050 mpu;         //Default pins for I2C are SCL: IO22/Arduino D3, S
 step step1(STEPPER_INTERVAL_US,STEPPER1_STEP_PIN,STEPPER1_DIR_PIN );
 step step2(STEPPER_INTERVAL_US,STEPPER2_STEP_PIN,STEPPER2_DIR_PIN );
 
-// filtering sensor readings through fusion
-// float CompFilter(float accel, float gyro, float coeff, float prev){
-//     return coeff * (prev + gyro * dt) + (1-coeff) *accel;
-// }
-
-
 //Interrupt Service Routine for motor update
 //Note: ESP32 doesn't support floating point calculations in an ISR
 bool TimerHandler(void * timerNo)
@@ -56,6 +50,7 @@ void setup()
 {
   Serial.begin(115200);
   pinMode(TOGGLE_PIN,OUTPUT);
+  setupNetwork(ssid, password);
 
   // Try to initialize Accelerometer/Gyroscope
   if (!mpu.begin()) {
@@ -69,17 +64,18 @@ void setup()
   mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
+  
+  
 
 
   //initialize the network
-  setupNetwork(ssid, password);
 
 
   //Attach motor update ISR to timer to run every STEPPER_INTERVAL_US μs
   if (!ITimer.attachInterruptInterval(STEPPER_INTERVAL_US, TimerHandler)) {
     Serial.println("Failed to start stepper interrupt");
     while (1) delay(10);
-    }
+  }
   Serial.println("Initialised Interrupt for Stepper");
 
   // Set motor acceleration values
@@ -101,26 +97,27 @@ void loop()
   
   // loop for outer loop
 
-  // if (millis() > SpeedTimer){
-  //   sensors_event_t a, g, temp;
-  //   mpu.getEvent(&a, &g, &temp);
+  if (millis() > SpeedTimer){
+    SpeedTimer += SPEED_INTERVAL;
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
 
-  //   SpeedTimer += SPEED_INTERVAL;
-  //   GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
-  //   CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
-  //   SpeedError = SetSpeed - CurrSpeed;
-
-
-  //   SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
-  //   SpeedIntegral += SpeedError* dtSpeed;
+    GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+    // CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
+    CurrSpeed = GetSpeed;
+    SpeedError = SetSpeed - CurrSpeed;
 
 
+    SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
+    SpeedIntegral += SpeedError* dtSpeed;
 
-  //   setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed * SpeedIntegral)-0.04;
-  //   PreviousSpeedError = SpeedError;
-  //   PreviousSpeed = CurrSpeed;
 
-  // }
+
+    setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed * SpeedIntegral);
+    PreviousSpeedError = SpeedError;
+    PreviousSpeed = CurrSpeed;
+
+  }
 
 
   //loop  for the inner loop
@@ -132,31 +129,37 @@ void loop()
     mpu.getEvent(&a, &g, &temp);
 
 
-    GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
-    CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
-    SpeedError = SetSpeed - CurrSpeed;
+    // GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
+    // CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.8);
+    // CurrSpeed = GetSpeed;
+    // SpeedError = SetSpeed - CurrSpeed;
 
 
-    SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
-    SpeedIntegral += SpeedError* dt;
+    // SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
+    // SpeedIntegral += SpeedError* dt;
 
 
 
-    setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral)-0.04;
-    PreviousSpeedError = SpeedError;
-    PreviousSpeed = CurrSpeed;
+    // setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral) + 0.02;
+    // PreviousSpeedError = SpeedError;
+    // PreviousSpeed = CurrSpeed;
 
 
     
 
     // //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-    accelTilt = a.acceleration.z/9.67;
+    accelTilt = a.acceleration.z/9.67 - 0.09;
     gyroRate = g.gyro.y;
+    gyroX = g.gyro.roll + 0.1;
 
     // if (abs(gyroRate) < 0.05){
     //   gyroRate = 0.0;
     // }
 
+
+    RotationError = RotationSetpoint - gyroX;
+    RotationIntegral+= RotationError * dt;
+    RotationControl = RotateP * RotationError + RotationIntegral*RotateI;
 
     tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
     error = setpoint - tilt;
@@ -166,8 +169,8 @@ void loop()
     // derivative = (error - PreviousError) / dt;
 
     PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
-    step1.setAccelerationRad(PIDout);
-    step2.setAccelerationRad(PIDout);
+    step1.setAccelerationRad(PIDout+RotationControl);
+    step2.setAccelerationRad(PIDout-RotationControl);
     if (PIDout < 0){
       step1.setTargetSpeedRad(-20);
       step2.setTargetSpeedRad(-20);
@@ -186,9 +189,12 @@ void loop()
   if (millis() > printTimer) {
     server.handleClient();
     printTimer += PRINT_INTERVAL;
+    // Serial.println(RotationSetpoint);
     // Serial.print(printTimer);
     // Serial.print(" ");
-    // Serial.println(AccelRaw);
-
+    // Serial.print(accelTilt);
+    // Serial.print(gyroRate);
+    Serial.println(tilt);
+    delay(10);
   }
 }
