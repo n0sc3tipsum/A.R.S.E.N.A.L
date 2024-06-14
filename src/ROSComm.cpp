@@ -5,14 +5,15 @@ ROSComm::ROSComm()
 {
     _agent_port = 8888;
     _ssid = "Yep";
-    _pswd = "Yepyepyep";
+    _pswd = "yepyepyep";
     _msg_conf = {0};
  
 }
 
-void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
+void ROSComm::Init(IPAddress agent_ip, size_t agent_port, bool use_kinematic_control)
 {
     Serial.println("Setting micro-ROS wifi transports");
+    _kin_en = use_kinematic_control;
 
     set_microros_wifi_transports(_ssid, _pswd, _agent_ip, _agent_port);
     delay(2000);
@@ -60,7 +61,9 @@ void ROSComm::Init(IPAddress agent_ip, size_t agent_port)
     
     Serial.println("");
     Serial.println("----- Initialising Executor -----");
+
     unsigned int num_handles = 2;
+
     RCSOFTCHECK(rclc_executor_init(
         &executor, 
         &support.context, 
@@ -80,13 +83,25 @@ void ROSComm::CommandCallback(const void *cmd_vel_recv, float *angular_setpoint,
 
     *linear_setpoint = _cmd_vel_msg.linear.x;
     *angular_setpoint = _cmd_vel_msg.angular.z;
-    Serial.println("Got Cmd_Vel !");
+    /*Serial.println("Got Cmd_Vel !");
 
     Serial.print("Linear Velocity Setpoint : ");
     Serial.println(*linear_setpoint);
     Serial.print("Angular Velocity Setpoint : ");
     Serial.println(*angular_setpoint);
     /*Control Integration*/
+}
+
+void ROSComm::KinematicCommandCallback(const void *kin_cmd_vel_recv, double *left_motor_vel, double *right_motor_vel)
+{
+    _kinematic_cmd_msg = *(sensor_msgs__msg__JointState *) kin_cmd_vel_recv;
+    //Serial.print("Left Wheel Speed : ");
+    //Serial.println(_kinematic_cmd_msg.velocity.data[0]);
+    /*Serial.print("Right Wheel Speed : ");
+    Serial.println(_kinematic_cmd_msg.velocity.data[1]);*/
+    *left_motor_vel = _kinematic_cmd_msg.velocity.data[0];
+    *right_motor_vel = _kinematic_cmd_msg.velocity.data[1];
+    
 }
 
 void ROSComm::CreatePublishers()
@@ -152,6 +167,14 @@ void ROSComm::CreateSubscribers()
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "/diff_cont/cmd_vel_unstamped"),
         "Init cmd_vel Subscriber");
+
+    RCSOFTCHECK(rclc_subscription_init_default(
+        &_kinematic_cmd_vel_sub,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+        "/joint_ctrl"),
+        "Init Joint Controll Subscriber");
+    
 }
 
 void ROSComm::Cleanup()
@@ -167,6 +190,7 @@ void ROSComm::Cleanup()
     RCSOFTCHECK(rcl_publisher_fini(&_batt_pwr_pub, &node),"Shutting Down Batt pwr Pub");
 
     RCSOFTCHECK(rcl_subscription_fini(&_cmd_vel_sub, &node), "Shutting Down Cmd_vel Sub");
+    RCSOFTCHECK(rcl_subscription_fini(&_kinematic_cmd_vel_sub, &node), "Shutting Down Kinematic Cmd_vel Sub");
 
     RCSOFTCHECK(rcl_timer_fini(&timer), "Shutting Down Timer");
     RCSOFTCHECK(rcl_node_fini(&node), "Shutting Down ESP Node");
@@ -221,6 +245,11 @@ void ROSComm::InitMessages()
                 ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
                 &_imu_msg, _msg_conf), 
                 "Alloc IMU Message Memory");
+
+   RCSOFTCHECK(!micro_ros_utilities_create_message_memory(
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+                &_kinematic_cmd_msg, _msg_conf), 
+                "Alloc Kinematic Command Message Memory");
 
    RCSOFTCHECK(!micro_ros_utilities_create_message_memory(
                 ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),

@@ -16,7 +16,8 @@
 float *SetSpeed;*/
 step left_motor  = step(STEPPER_INTERVAL_US, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
 step right_motor = step(STEPPER_INTERVAL_US, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
-
+double left_motor_speed;
+double right_motor_speed;
 
 Adafruit_MPU6050 imu;
 Battery batt;
@@ -54,6 +55,11 @@ void cmd_vel_sub_callback(const void *msgin)
     espRosAgent.CommandCallback(msgin, &RotationSetpoint, &SetSpeed);
 }
 
+void kinematic_cmd_vel_callback(const void *msgin)
+{
+    espRosAgent.KinematicCommandCallback(msgin, &left_motor_speed, &right_motor_speed);
+}
+
 void cleanup()
 {
     espRosAgent.Cleanup();
@@ -66,6 +72,9 @@ void setup()
     Serial.begin(115200);
 
     pinMode(TOGGLE_PIN,OUTPUT);
+    bool use_kinematic_control = true;
+    left_motor_speed = 0.0;
+    right_motor_speed = 0.0;
 
     // Try to initialize Accelerometer/Gyroscope
     if (!imu.begin()) 
@@ -104,14 +113,17 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,254,205); //Set this to your desktop IP
+    espRosAgent._agent_ip = IPAddress(192,168,12,236); //Set this to your desktop IP
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
 
+    left_motor.setAccelerationRad(30);
+    right_motor.setAccelerationRad(30);
+
     //*RotationSetpoint = 0.0;
     //*SetSpeed = 0.0;
-    espRosAgent.Init();
+    espRosAgent.Init(use_kinematic_control);
 
     const unsigned int timer_timeout = 1000;
 
@@ -122,15 +134,27 @@ void setup()
                 timer_callback), 
                 "Init Timer");
 
-
-    RCSOFTCHECK(rclc_executor_add_subscription(
-                &espRosAgent.executor, 
-                &espRosAgent._cmd_vel_sub, &espRosAgent._cmd_vel_msg, 
-                &cmd_vel_sub_callback, ON_NEW_DATA), 
-                "Create cmd_vel Subscription");
-
     RCSOFTCHECK(rclc_executor_add_timer(&espRosAgent.executor, &espRosAgent.timer), 
                 "Add Timer To Executor");
+
+    if (espRosAgent._kin_en)
+    {
+        RCSOFTCHECK(rclc_executor_add_subscription(
+            &espRosAgent.executor, 
+            &espRosAgent._kinematic_cmd_vel_sub, &espRosAgent._kinematic_cmd_msg, 
+            &kinematic_cmd_vel_callback, ON_NEW_DATA), 
+            "Create Kinematic Cmd Subscription");
+    }
+
+    else
+    {
+
+        RCSOFTCHECK(rclc_executor_add_subscription(
+            &espRosAgent.executor, 
+            &espRosAgent._cmd_vel_sub, &espRosAgent._cmd_vel_msg, 
+            &cmd_vel_sub_callback, ON_NEW_DATA), 
+            "Create cmd_vel Subscription");
+    }
 
 }
 
@@ -181,36 +205,46 @@ void loop()
     
 
         //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-        accelTilt = imu_data.accel.acceleration.z/9.67 - 0.09;
-        gyroRate  = imu_data.gyro.gyro.y;
-
-
-        tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
-        error = setpoint - tilt;
-        imu_data.accel.acceleration.y = tilt;
-        integral += error *dt;
-
-        PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
-        left_motor.setAccelerationRad(PIDout);
-        right_motor.setAccelerationRad(PIDout);
-
-        if (PIDout < 0)
+        if (!espRosAgent._kin_en)
         {
-            left_motor.setTargetSpeedRad(-20);
-            right_motor.setTargetSpeedRad(-20);
+            accelTilt = imu_data.accel.acceleration.z/9.67 - 0.09;
+            gyroRate  = imu_data.gyro.gyro.y;
+
+
+            tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
+            error = setpoint - tilt;
+            imu_data.accel.acceleration.y = tilt;
+            integral += error *dt;
+
+            PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
+            left_motor.setAccelerationRad(PIDout);
+            right_motor.setAccelerationRad(PIDout);
+
+            if (PIDout < 0)
+            {
+                left_motor.setTargetSpeedRad(-20);
+                right_motor.setTargetSpeedRad(-20);
+            }
+
+            else
+            {
+                left_motor.setTargetSpeedRad(20);
+                right_motor.setTargetSpeedRad(20);
+            }
+
+            PreviousError = error;
         }
 
         else
-        {
-            left_motor.setTargetSpeedRad(20);
-            right_motor.setTargetSpeedRad(20);
+        {   
+            left_motor.setTargetSpeedRad(left_motor_speed);
+            right_motor.setTargetSpeedRad(right_motor_speed);
         }
-
-        PreviousError = error;
+        
 
         //batt.getBatteryState();
     }
 
-    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(10));
-    //delay(50);
+    rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(1000));
+    delay(100);
 }

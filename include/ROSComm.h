@@ -58,8 +58,10 @@ public:
 
     ROSComm();
 
-    void Init(IPAddress agent__ip = IPAddress(191, 165, 28,0), size_t agent_port = 0);
+    void Init(IPAddress agent__ip = IPAddress(191, 165, 28,0), size_t agent_port = 0, bool use_kinematic_control = true);
     void CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint);
+    void KinematicCommandCallback(const void *kin_cmd_vel_recv, double *left_motor_vel, double *right_motor_vel);
+
     void PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower);
     void CreatePublishers();
     void CreateSubscribers();
@@ -75,7 +77,7 @@ public:
     size_t    _agent_port;
     char      *_ssid;
     char      *_pswd;
-
+    bool _kin_en;
     
     rcl_node_t       node;
     rcl_allocator_t  allocator;
@@ -94,6 +96,9 @@ public:
     rcl_subscription_t          _cmd_vel_sub;
     geometry_msgs__msg__Twist   _cmd_vel_msg;
  
+    rcl_subscription_t           _kinematic_cmd_vel_sub;
+    sensor_msgs__msg__JointState _kinematic_cmd_msg;
+
     builtin_interfaces__msg__Time   _time_stamp;
     sensor_msgs__msg__Imu           _imu_msg;
     //sensor_msgs__msg__JointState    _lwheel_state_msg;
