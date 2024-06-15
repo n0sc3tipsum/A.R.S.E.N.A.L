@@ -4,8 +4,8 @@
 ROSComm::ROSComm()
 {
     _agent_port = 8888;
-    _ssid = "Yep";
-    _pswd = "yepyepyep";
+    _ssid = "AndroidAP";
+    _pswd = "nvff0137";
     _msg_conf = {0};
  
 }
@@ -83,6 +83,10 @@ void ROSComm::CommandCallback(const void *cmd_vel_recv, float *angular_setpoint,
 
     *linear_setpoint = _cmd_vel_msg.linear.x;
     *angular_setpoint = _cmd_vel_msg.angular.z;
+    Serial.print("Linear Set : ");
+    Serial.println(*linear_setpoint);
+    Serial.print("Angular : ");
+    Serial.println(*angular_setpoint);
     /*Serial.println("Got Cmd_Vel !");
 
     Serial.print("Linear Velocity Setpoint : ");
@@ -160,21 +164,24 @@ void ROSComm::CreatePublishers()
 void ROSComm::CreateSubscribers()
 {
     Serial.println("Initializing Subscribers");
-
-    RCSOFTCHECK(rclc_subscription_init_default(
-        &_cmd_vel_sub,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/diff_cont/cmd_vel_unstamped"),
-        "Init cmd_vel Subscriber");
-
-    RCSOFTCHECK(rclc_subscription_init_default(
-        &_kinematic_cmd_vel_sub,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
-        "/joint_ctrl"),
-        "Init Joint Controll Subscriber");
-    
+    if (!_kin_en)
+    {
+        RCSOFTCHECK(rclc_subscription_init_default(
+            &_cmd_vel_sub,
+            &node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+            "/diff_cont/cmd_vel_unstamped"),
+            "Init cmd_vel Subscriber");
+    }   
+    else
+    { 
+        RCSOFTCHECK(rclc_subscription_init_default(
+            &_kinematic_cmd_vel_sub,
+            &node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+            "/joint_ctrl"),
+            "Init Joint Controll Subscriber");
+    }
 }
 
 void ROSComm::Cleanup()

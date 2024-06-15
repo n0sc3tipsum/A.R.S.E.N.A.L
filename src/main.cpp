@@ -18,7 +18,8 @@ step left_motor  = step(STEPPER_INTERVAL_US, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN
 step right_motor = step(STEPPER_INTERVAL_US, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
 double left_motor_speed;
 double right_motor_speed;
-
+float RotationSetpoint;
+float SetSpeed;
 Adafruit_MPU6050 imu;
 Battery batt;
 ROSComm espRosAgent;
@@ -27,6 +28,7 @@ ESP32Timer ITimer(3);
 
 imu_data_t imu_data; 
 motor_data_t motor_data;
+
 //Interrupt Service Routine for motor update
 //Note: ESP32 doesn't support floating point calculations in an ISR
 bool TimerHandler(void * timerNo)
@@ -45,13 +47,12 @@ bool TimerHandler(void * timerNo)
 
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
-    //Serial.println("");
     espRosAgent.PublishCallback(&motor_data, &imu_data, batt.BatteryLevel, batt.TotalPower);
-    //Serial.println("");
 }
 
 void cmd_vel_sub_callback(const void *msgin)
 {
+    
     espRosAgent.CommandCallback(msgin, &RotationSetpoint, &SetSpeed);
 }
 
@@ -75,7 +76,8 @@ void setup()
     bool use_kinematic_control = false;
     left_motor_speed = 0.0;
     right_motor_speed = 0.0;
-
+    RotationSetpoint = 0.0;
+    SetSpeed = 0.0;
     // Try to initialize Accelerometer/Gyroscope
     if (!imu.begin()) 
     {
@@ -113,24 +115,22 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,12,236); //Set this to your desktop IP
+    espRosAgent._agent_ip = IPAddress(192,168,246,236); //Set this to your desktop IP
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
 
-    left_motor.setAccelerationRad(30);
-    right_motor.setAccelerationRad(30);
+    // left_motor.setAccelerationRad(30);
+    // right_motor.setAccelerationRad(30);
 
-    //*RotationSetpoint = 0.0;
-    //*SetSpeed = 0.0;
     espRosAgent.Init(use_kinematic_control);
 
-    const unsigned int timer_timeout = 1000;
+    const unsigned int timer_period = 1000;
 
     RCSOFTCHECK(rclc_timer_init_default(
                 &espRosAgent.timer,
                 &espRosAgent.support,
-                RCL_MS_TO_NS(timer_timeout),
+                RCL_MS_TO_NS(timer_period),
                 timer_callback), 
                 "Init Timer");
 
@@ -147,7 +147,6 @@ void setup()
 
     else
     {
-
         RCSOFTCHECK(rclc_executor_add_subscription(
             &espRosAgent.executor, 
             &espRosAgent._cmd_vel_sub, &espRosAgent._cmd_vel_msg, 
@@ -165,7 +164,7 @@ void loop()
 {
     //static unsigned long printTimer = 0;  //time of the next print
     static unsigned long loopTimer = 0;   //time of the next control update
-
+    static unsigned long speedTimer = 0;   
     /*if (Serial.available() > 0) 
     {
         String command = Serial.readStringUntil('\n');  // Read the command until newline
@@ -181,45 +180,55 @@ void loop()
         }
     }*/
 
-    if (millis() > loopTimer) 
-    {
-        loopTimer += LOOP_INTERVAL;
+    if (!espRosAgent._kin_en) 
+    {   
 
-        // Fetch data from MPU6050
         imu.getEvent(&imu_data.accel, &imu_data.gyro, &imu_data.temp);
         motor_data.left_pos = left_motor.getPositionRad();
         motor_data.left_speed = left_motor.getSpeedRad();
         motor_data.right_pos = right_motor.getPositionRad();
         motor_data.right_speed = right_motor.getSpeedRad();
-        // GetSpeed = (left_motor.getSpeedRad() + left_motor.getSpeedRad())/2;
-        // CurrSpeed = LPF(GetSpeed, PreviousSpeed, 0.2);
-        // SpeedError = SetSpeed - CurrSpeed;
+
+        if (millis() > speedTimer)
+        {
+            speedTimer += SPEED_INTERVAL;
+
+            GetSpeed = (motor_data.left_speed + motor_data.right_speed)/2;
+            SpeedError = SetSpeed - GetSpeed;
 
 
-        // SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
-        // SpeedIntegral += SpeedError* dt;
+            SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
+            SpeedIntegral += SpeedError* dtSpeed;
 
+            setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed * SpeedIntegral);
+            PreviousSpeedError = SpeedError;
+        }
 
-        // setpoint           = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral)-0.04;
-        // PreviousSpeedError = SpeedError;
-        // PreviousSpeed      = CurrSpeed;
-    
+        
 
         //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-        if (!espRosAgent._kin_en)
+        if (millis() > loopTimer)
         {
+            loopTimer += LOOP_INTERVAL;
             accelTilt = imu_data.accel.acceleration.z/9.67 - 0.09;
             gyroRate  = imu_data.gyro.gyro.y;
 
 
+            RotationError = RotationSetpoint - imu_data.gyro.gyro.roll + 0.1;
+            RotationControl = RotateP * RotationError;
+
             tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
             error = setpoint - tilt;
-            imu_data.accel.acceleration.y = tilt;
+
             integral += error *dt;
 
+
             PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
-            left_motor.setAccelerationRad(PIDout);
-            right_motor.setAccelerationRad(PIDout);
+
+  
+
+            left_motor.setAccelerationRad(PIDout - RotationControl);
+            right_motor.setAccelerationRad(PIDout + RotationControl);
 
             if (PIDout < 0)
             {
@@ -233,18 +242,20 @@ void loop()
                 right_motor.setTargetSpeedRad(20);
             }
 
-            PreviousError = error;
         }
 
-        else
-        {   
-            left_motor.setTargetSpeedRad(left_motor_speed);
-            right_motor.setTargetSpeedRad(right_motor_speed);
-        }
+
         
-
         //batt.getBatteryState();
     }
 
+    else
+    {   
+        left_motor.setTargetSpeedRad(left_motor_speed);
+        right_motor.setTargetSpeedRad(right_motor_speed);
+    }
+
     rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
+    delay(100);
+
 }
