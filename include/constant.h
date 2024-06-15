@@ -20,7 +20,7 @@
     float dt = LOOP_INTERVAL / 1000.0;
     float dtSpeed = SPEED_INTERVAL / 1000.0;
     float alpha = 0.98; // complementary filter coefficient prev  values = 0.98
-    float accelTilt = 0.0;
+    float acceleration_tilt = 0.0;
     // float integralThreshold = 0.5;
 
     // PID constant for tilt
@@ -31,7 +31,7 @@
     // PID for tilt angle
     float setpoint = 0.0; // desired tilted angle (upright) -0.0375
     float tilt = 0.0; // current tilt
-    float gyroRate = 0.0;
+    float measured__roll_rate = 0.0;
     float PreviousError = 0.0; //previous tilt for derivative measurement
     float integral = 0.0; // integral term
     float derivative = 0.0; // derivative term
@@ -45,11 +45,11 @@
 
     //PID for speed
     //float SetSpeed = 0.0; // desired speed
-    float SpeedError = 0.0; // the error on the speed 
+    float error__x_vel = 0.0; // the error on the speed 
     float CurrSpeed = 0.0;
     float PreviousSpeedError = 0.0;
     float PreviousSpeed = 0.0;
-    float GetSpeed = 0.0;
+    float body_x_vel = 0.0;
     float SpeedDerivative = 0.0;
     float SpeedIntegral = 0.0;
 
@@ -61,13 +61,13 @@
 
     //rotational control (probably not needed)
     //float RotationSetpoint = 0.0;
-    float RotationError = 0.0;
+    float error__roll_rate = 0.0;
     float RotationIntegral = 0.0;
     float gyroX = 0.0;
     const float RotateP = 0;
     const float RotateI = 0.0;
 
-    float RotationControl = 0.0;
+    float control_input__angular = 0.0;
 
 
 #endif
