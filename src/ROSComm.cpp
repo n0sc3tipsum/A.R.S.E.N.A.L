@@ -429,7 +429,7 @@ void ROSComm::CreateMessages()
     _rwheel_state_msg.name.capacity=sizeof(rwheel_name);*/
 	
 }
-void ROSComm::PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower)
+void ROSComm::PublishCallback(volatile motor_data_t *motor_data, volatile imu_data_t *imu_data, int BattLevel, int BattPower)
 {
 
     getData(motor_data, imu_data, BattLevel, BattPower);
@@ -455,7 +455,7 @@ void ROSComm::PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, in
                 "Publish Battery Power Data");  */
 }
 
-void ROSComm::getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower)
+void ROSComm::getData(volatile motor_data_t *motor_data, volatile imu_data_t *imu_data, int BattLevel, int BattPower)
 {
     bool succ;
     /*_battery_lvl_msg.data = 99; //BattLevel

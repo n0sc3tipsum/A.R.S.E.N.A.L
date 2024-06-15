@@ -37,6 +37,13 @@
 
 typedef struct
 {
+    float x;
+    float y;
+    float z;
+}accel_t;
+
+typedef struct
+{
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -62,13 +69,13 @@ public:
     void CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint);
     void KinematicCommandCallback(const void *kin_cmd_vel_recv, double *left_motor_vel, double *right_motor_vel);
 
-    void PublishCallback(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower);
+    void PublishCallback(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
     void CreatePublishers();
     void CreateSubscribers();
     void CreateMessages();
     void Cleanup();
     void InitMessages();
-    void getData(motor_data_t *motor_data, imu_data_t *imu_data, int BattLevel, int BattPower);
+    void getData(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
 
     rosidl_runtime_c__String getFrameId(const char *input);
     
