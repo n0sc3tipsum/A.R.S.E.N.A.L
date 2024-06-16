@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="chassis_radius" value="0.049"/>
+    <xacro:property name="chassis_height" value="0.453"/>
+    <xacro:property name="picam_height" value="0.034"/>
+
+    <joint name="picam_joint" type="fixed">
+        <parent link="chassis"/>
+        <child link="picam_link"/>
+        <origin xyz="0.055 0 0.450" rpy="0 0 0"/> 
+    </joint>
+
+    <link name="picam_link">
+        <visual>
+            <geometry>
+                <cylinder radius="${chassis_radius}" length="${picam_height}"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+
+        <collision>
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="${chassis_radius}" length="${picam_height}"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.05" length="${picam_height}" radius="${chassis_radius}">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+
+    <joint name="picam_optical_joint" type="fixed">
+        <parent link="picam_link"/>
+        <child link="picam_link_optical"/>
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/> 
+    </joint>
+    <link name="picam_link_optical"></link>
+
+
+    <gazebo reference="picam_link">
+        <sensor name="picam" type="camera"> 
+            <pose> 0 0 0 0 0 0 </pose>
+            <visualize>true</visualize> 
+            <update_rate>15</update_rate>
+            <camera>
+                <horizontal_fov>1.1</horizontal_fov>
+                <image>
+                    <format>R8G8B8</format>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>8.0</far>
+                </clip>
+            </camera>
+
+            <plugin name="picam_controller" filename="libgazebo_ros_camera.so">
+                <frame_name>picam_link_optical</frame_name>
+            </plugin>
+            
+        </sensor> 
+    </gazebo>
+
+</robot>

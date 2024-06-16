@@ -16,6 +16,8 @@
     </xacro:if>
 
     <xacro:include filename="lidar.xacro" />
+    <xacro:include filename="camera.xacro" />
+
 
 
     <!--<xacro:include filename="camera.xacro" />-->
