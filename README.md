@@ -9,4 +9,6 @@
     - code for monitoring robot (telemetry) and data collection
 - **EspBridge-Dual**
     - Integration of PID controller and upper-level system with multithreads.
+- **ArsenalServer**
+    - Server side code 
 
