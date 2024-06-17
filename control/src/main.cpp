@@ -99,24 +99,22 @@ void loop()
 
   if (millis() > SpeedTimer){
     SpeedTimer += SPEED_INTERVAL;
+
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 
+    //get the average linear velocity
     GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
-    // CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.2);
     CurrSpeed = GetSpeed;
+
+    //Implementation of PID for the outer loop linear velocity control
     SpeedError = SetSpeed - CurrSpeed;
-
-
     SpeedDerivative = (SpeedError - PreviousSpeedError) / dtSpeed;
     SpeedIntegral += SpeedError* dtSpeed;
-
-
-
+    // Connecting the velocity control and the inner loop control by having the output as the reference input
     setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed * SpeedIntegral);
     PreviousSpeedError = SpeedError;
     PreviousSpeed = CurrSpeed;
-
   }
 
 
@@ -128,46 +126,22 @@ void loop()
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 
-
-    // GetSpeed = (step1.getSpeedRad() + step2.getSpeedRad())/2;
-    // CurrSpeed = LPF(GetSpeed,PreviousSpeed,0.8);
-    // CurrSpeed = GetSpeed;
-    // SpeedError = SetSpeed - CurrSpeed;
-
-
-    // SpeedDerivative = (SpeedError - PreviousSpeedError) / dt;
-    // SpeedIntegral += SpeedError* dt;
-
-
-
-    // setpoint = -(SpeedError * KpSpeed + SpeedDerivative*KdSpeed + KiSpeed*SpeedIntegral) + 0.02;
-    // PreviousSpeedError = SpeedError;
-    // PreviousSpeed = CurrSpeed;
-
-
-    
-
     // //Calculate Tilt using accelerometer and sin x = x approximation for a small tilt angle
-    accelTilt = a.acceleration.z/9.67 - 0.09;
-    gyroRate = g.gyro.y;
-    gyroX = g.gyro.roll + 0.1;
+    accelTilt = a.acceleration.z/9.67 - 0.14;
+    gyroRate = g.gyro.y -0.015;
+    gyroX = g.gyro.roll + 0.09;
 
-    // if (abs(gyroRate) < 0.05){
-    //   gyroRate = 0.0;
-    // }
-
-
+    // Implementation of outerloop yaw velocity control
     RotationError = RotationSetpoint - gyroX;
     RotationIntegral+= RotationError * dt;
     RotationControl = RotateP * RotationError + RotationIntegral*RotateI;
 
+    //implementation of inner loop tilt control
     tilt = CompFilter(accelTilt, gyroRate, alpha, tilt);
     error = setpoint - tilt;
-
     integral += error *dt;
 
-    // derivative = (error - PreviousError) / dt;
-
+    //connecting the output of the controller together
     PIDout = error * Kp  - gyroRate*Kd + integral * Ki;
     step1.setAccelerationRad(PIDout+RotationControl);
     step2.setAccelerationRad(PIDout-RotationControl);
@@ -182,7 +156,6 @@ void loop()
     step2.setTargetSpeedRad(20);
 
     }
-    PreviousError = error;
   }
   
   // Print updates every PRINT_INTERVAL ms
@@ -192,9 +165,9 @@ void loop()
     // Serial.println(RotationSetpoint);
     // Serial.print(printTimer);
     // Serial.print(" ");
-    // Serial.print(accelTilt);
+    // Serial.println(gyroX);
     // Serial.print(gyroRate);
-    Serial.println(tilt);
+    // Serial.println(tilt);
     delay(10);
   }
 }
