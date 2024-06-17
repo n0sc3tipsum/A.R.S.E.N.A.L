@@ -4,11 +4,11 @@
 ### Branch Structure
 - **Control**
   - Control
-    - Implementation of PID control (Development)
+    - Implementation of PID control (Development Controller)
   - Tests
     - code for monitoring robot (telemetry) and data collection
 - **EspBridge-Dual**
-    - Integration of PID controller and upper-level system with multithreads (Production Controller).
+    - Implementation of PID control and integration  (Production Controller).
 - **ArsenalServer**
     - Server side code 
 
