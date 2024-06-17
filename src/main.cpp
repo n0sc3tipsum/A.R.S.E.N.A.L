@@ -1,3 +1,4 @@
+/* General Libraries*/
 #include <Arduino.h>
 #include <WiFi.h>
 #include <IPAddress.h>
@@ -7,16 +8,18 @@
 #include <constant.h>
 #include <filter.h>
 
+/* Realtime Operating System Libraries */
 #include <ESP32TimerInterrupt_Generic.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
 
+/* Custom Headers */
 #include "Battery.h"
 #include "ROSComm.h"
 #include "step.h"
 
-
+/* Thread Safety and Tasks */
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 TaskHandle_t ROSTask;
 TaskHandle_t ControlTask;
@@ -44,26 +47,57 @@ ROSComm espRosAgent;
 
 
 
-//Interrupt Service Routine for motor update
-//Note: ESP32 doesn't support floating point calculations in an ISR
+/*---------------- Interrupt Service Routines ----------------*/
+
+/*
+ * @brief   Timer generated interrupt used to turn the stepper motors
+ *         
+ * @param timerNo : Handle to the ESP32Timer object used in generating interrupt
+ * @return        : bool-> true (always)
+ * @note          : Runs with a period of 10ms 
+*/
+
 bool timerISR__runMotors(void * timerNo)
 {
     static bool toggle = false;
-
-    //Update the stepper motors
+    
+    /* Move Motors */
     left_motor.runStepper();
     right_motor.runStepper();
 
-    //Indicate that the ISR is running
+    /* Toggle LED to Indicate Running Status */
     digitalWrite(TOGGLE_PIN, toggle);  
     toggle = !toggle;
+    
     return true;
 }
+
+
+
+/*
+ * @brief   Timer generated interrupt used to publish data onto ROS2 network
+ *         
+ * @param timerNo        : Handle to the rcl timer object used in generating interrupt
+ * @param last_call_time : Last time the interrupt was generated -> automatically passed by executor object
+ * @return               : void
+ * @note                 : Used as a callback function that is attatched to the rcl executor object. Runs every 1 sec
+*/
 
 void timerISR__publishData(rcl_timer_t * timer, int64_t last_call_time)
 {
     espRosAgent.PublishCallback(&motor_data, &imu_data, batt.BatteryLevel, batt.TotalPower);
 }
+
+
+
+/*
+ * @brief   Timer generated interrupt used to publish data onto ROS2 network
+ *         
+ * @param timerNo        : Handle to the rcl timer object used in generating interrupt
+ * @param last_call_time : Last time the interrupt was generated -> automatically passed by executor object
+ * @return               : void
+ * @note                 : Used as a callback function that is attatched to the rcl executor object. Runs every 1 sec
+*/
 
 void getBodySetpointsISR(const void *msgin)
 {
