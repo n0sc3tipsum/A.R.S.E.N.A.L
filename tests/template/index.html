@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IMU Tilt and Speed Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>IMU Tilt and Speed Data</h1>
+    <div>
+        <label for="setpoint">Setpoint:</label>
+        <input type="text" id="setpoint" name="setpoint">
+        <button onclick="updateSetpoint()">Update Setpoint</button>
+    </div>
+    <canvas id="tiltChart" width="800" height="400"></canvas>
+    <canvas id="speedChart" width="800" height="400"></canvas>
+
+    <script>
+        const tiltCtx = document.getElementById('tiltChart').getContext('2d');
+        const speedCtx = document.getElementById('speedChart').getContext('2d');
+
+        const tiltChart = new Chart(tiltCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Tilt X',
+                        data: [],
+                        borderColor: 'blue',
+                        fill: false,
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'Setpoint',
+                        data: [],
+                        borderColor: 'green',
+                        borderDash: [5, 5],
+                        fill: false,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (seconds)'
+                        }
+                    },
+                    y1: {
+                        title: {
+                            display: true,
+                            text: 'Tilt Angle (degrees) / Setpoint'
+                        },
+                        position: 'left',
+                    }
+                }
+            }
+        });
+
+        const speedChart = new Chart(speedCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Current Speed',
+                    data: [],
+                    borderColor: 'red',
+                    fill: false,
+                    yAxisID: 'y2'
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (seconds)'
+                        }
+                    },
+                    y2: {
+                        title: {
+                            display: true,
+                            text: 'Speed (units)'
+                        },
+                        position: 'left',
+                    }
+                }
+            }
+        });
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/data');
+                const data = await response.json();
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+                    const time = data.time;
+                    const tiltX = data.tiltX;
+                    const setpoint = data.setpoint;
+                    const speed = data.speed;
+
+                    // Update tilt chart
+                    tiltChart.data.labels.push(time);
+                    tiltChart.data.datasets[0].data.push(tiltX);
+                    tiltChart.data.datasets[1].data.push(setpoint);
+                    if (tiltChart.data.labels.length > 100) {
+                        tiltChart.data.labels.shift();
+                        tiltChart.data.datasets[0].data.shift();
+                        tiltChart.data.datasets[1].data.shift();
+                    }
+                    tiltChart.update();
+
+                    // Update speed chart
+                    speedChart.data.labels.push(time);
+                    speedChart.data.datasets[0].data.push(speed);
+                    if (speedChart.data.labels.length > 100) {
+                        speedChart.data.labels.shift();
+                        speedChart.data.datasets[0].data.shift();
+                    }
+                    speedChart.update();
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        async function updateSetpoint() {
+            const setpoint = document.getElementById('setpoint').value;
+            try {
+                const response = await fetch('/update_setpoint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ setpoint: setpoint }),
+                });
+                if (response.ok) {
+                    console.log('Setpoint updated successfully');
+                } else {
+                    console.error('Failed to update setpoint');
+                }
+            } catch (error) {
+                console.error('Error updating setpoint:', error);
+            }
+        }
+
+        setInterval(fetchData, 1000);  // Fetch data every second
+    </script>
+</body>
+</html>
