@@ -23,78 +23,64 @@ def generate_launch_description():
     robot_description_file = os.path.join(pkg_path, 'description', 'arsenal_robot_description.urdf.xacro')
     robot_description = Command(['xacro ', robot_description_file])
 
-    rsp_launch_file = os.path.join(pkg_path, 'launch', 'rsp.launch.py')
-    rsp = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(rsp_launch_file),
+    robot_state_publisher_path = os.path.join(pkg_path, 'launch', 'rsp.launch.py')
+    RobotStatePublisher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(robot_state_publisher_path),
         launch_arguments={'robot_description': robot_description}.items()
     )
 
-    twist_mux_params = os.path.join(pkg_path, 'config', 'twist_mux.yaml')
-    twist_mux = Node(
+    twist_mux_parameters = os.path.join(pkg_path, 'config', 'twist_mux.yaml')
+    TwistMux = Node(
         package="twist_mux",
         executable="twist_mux",
-        parameters=[twist_mux_params, {'use_sim_time': False}],
+        parameters=[twist_mux_parameters, {'use_sim_time': False}],
         remappings=[('/cmd_vel_out', '/diff_cont/cmd_vel_unstamped')]
     )
 
 
 
-    #robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
+    controller_parameters = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
 
-    controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
-
-    controller_manager = Node(
+    ControllerManager = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[{'robot_description': robot_description},
-                    controller_params_file]
+                    controller_parameters]
     )
 
-    delayed_controller_manager = TimerAction(period=3.0, actions=[controller_manager])
+    DelayedControllerManager = TimerAction(period=3.0, actions=[ControllerManager])
 
-    diff_drive_spawner = Node(
+    DifferentialDriver = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["diff_cont"],
     )
 
-    delayed_diff_drive_spawner = RegisterEventHandler(
+    DelayedDifferntialDriver = RegisterEventHandler(
         event_handler=OnProcessStart(
-            target_action=controller_manager,
-            on_start=[diff_drive_spawner],
+            target_action=ControllerManager,
+            on_start=[DifferentialDriver],
         )
     )
 
-    joint_broad_spawner = Node(
+    JointBroadcaster = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_broad"],
     )
 
-    delayed_joint_broad_spawner = RegisterEventHandler(
+    DelayedJointBroadcaster = RegisterEventHandler(
         event_handler=OnProcessStart(
-            target_action=controller_manager,
-            on_start=[joint_broad_spawner],
+            target_action=ControllerManager,
+            on_start=[JointBroadcaster],
         )
     )
-    # odom_calculator = Node(
-    #         package="arsenal_navigator",
-    #         executable="OdomCalculator"
-    # )
 
-    # ekf = IncludeLaunchDescription(
-    #         PythonLaunchDescriptionSource([os.path.join(
-    #                     get_package_share_directory(package_name),'launch','ekf.launch.py'
-    #                 )])
-    # )
-
-    # Launch them all
     return LaunchDescription([
-        rsp,
-        twist_mux,
-        delayed_controller_manager,
-        delayed_diff_drive_spawner,
-        delayed_joint_broad_spawner
-        #odom_calculator
-        #ekf
+        RobotStatePublisher,
+        TwistMux,
+        DelayedControllerManager,
+        DelayedDifferntialDriver,
+        DelayedJointBroadcaster
+
     ])
