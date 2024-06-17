@@ -37,18 +37,9 @@
 
 typedef struct
 {
-    float x;
-    float y;
-    float z;
-}accel_t;
-
-typedef struct
-{
-
     sensors_event_t accel;
     sensors_event_t gyro;
     sensors_event_t temp;
-
 }imu_data_t;
 
 typedef struct
@@ -66,53 +57,53 @@ public:
     ROSComm();
 
     void Init(bool use_kinematic_control);
+    void InitMessages();
+    void CreatePublishers();
+    void CreateSubscribers();   
+
+    void getData(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
+    void PublishCallback(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
     void CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint);
     void KinematicCommandCallback(const void *kin_cmd_vel_recv, double *left_motor_vel, double *right_motor_vel);
 
-    void PublishCallback(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
-    void CreatePublishers();
-    void CreateSubscribers();
-    void CreateMessages();
     void Cleanup();
-    void InitMessages();
-    void getData(volatile motor_data_t *motor_data,volatile imu_data_t *imu_data, int BattLevel, int BattPower);
 
-    rosidl_runtime_c__String getFrameId(const char *input);
-    
+    bool      _kin_en;
+    bool      _debug_en;
+
     IPAddress _esp_ip;
     IPAddress _agent_ip;
     size_t    _agent_port;
-    char      *_ssid;
-    char      *_pswd;
-    bool _kin_en;
-    
+
+private :
+
+    char             *_ssid;
+    char             *_pswd;
+
     rcl_node_t       node;
     rcl_allocator_t  allocator;
     rclc_executor_t  executor;
     rclc_support_t   support;
     rcl_timer_t      timer;
     
-    //rcl_publisher_t _left_wheel_state_pub;
-    //rcl_publisher_t _right_wheel_state_pub;
-    rcl_publisher_t _joint_state_pub;
-    rcl_publisher_t _imu_pub;
-    rcl_publisher_t _batt_lvl_pub;
-    rcl_publisher_t _batt_pwr_pub;
+    rcl_publisher_t                 _joint_state_pub;
+    sensor_msgs__msg__JointState    _joint_states_msg;
 
+    rcl_publisher_t        _imu_pub;
+    sensor_msgs__msg__Imu  _imu_msg;
 
-    rcl_subscription_t          _cmd_vel_sub;
-    geometry_msgs__msg__Twist   _cmd_vel_msg;
+    rcl_publisher_t      _batt_lvl_pub;
+    std_msgs__msg__Int32 _battery_lvl_msg;
+    rcl_publisher_t      _batt_pwr_pub;
+    std_msgs__msg__Int32 _battery_pwr_msg;
+
+    rcl_subscription_t           _cmd_vel_sub;
+    geometry_msgs__msg__Twist    _cmd_vel_msg;
  
     rcl_subscription_t           _kinematic_cmd_vel_sub;
     sensor_msgs__msg__JointState _kinematic_cmd_msg;
 
-    builtin_interfaces__msg__Time   _time_stamp;
-    sensor_msgs__msg__Imu           _imu_msg;
-    //sensor_msgs__msg__JointState    _lwheel_state_msg;
-    //sensor_msgs__msg__JointState    _rwheel_state_msg;
-    std_msgs__msg__Int32            _battery_pwr_msg;
-    std_msgs__msg__Int32            _battery_lvl_msg;
-    sensor_msgs__msg__JointState    _joint_states_msg;
+    builtin_interfaces__msg__Time     _time_stamp;
     micro_ros_utilities_memory_conf_t _msg_conf;
 };
 
