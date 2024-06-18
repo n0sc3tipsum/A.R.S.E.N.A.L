@@ -79,14 +79,22 @@ void ROSComm::Init(bool use_kinematic_control)
 
 void ROSComm::CommandCallback(const void *cmd_vel_recv, float *angular_setpoint, float *linear_setpoint)
 {
-    _cmd_vel_msg = *(geometry_msgs__msg__Twist *) cmd_vel_recv;
+    if (cmd_vel_recv != NULL)
+    {
+        _cmd_vel_msg = *(geometry_msgs__msg__Twist *) cmd_vel_recv;
 
-    *linear_setpoint = _cmd_vel_msg.linear.x;
-    *angular_setpoint = _cmd_vel_msg.angular.z;
-    Serial.print("Linear Set : ");
+        *linear_setpoint = _cmd_vel_msg.linear.x;
+        *angular_setpoint = _cmd_vel_msg.angular.z;
+    }
+
+    else
+    {
+        Serial.println("NULL Message");
+    }
+    /*Serial.print("Linear Set : ");
     Serial.println(*linear_setpoint);
     Serial.print("Angular : ");
-    Serial.println(*angular_setpoint);
+    Serial.println(*angular_setpoint);*/
     /*Serial.println("Got Cmd_Vel !");
 
     Serial.print("Linear Velocity Setpoint : ");
@@ -304,9 +312,9 @@ void ROSComm::PublishCallback(volatile motor_data_t *motor_data, volatile imu_da
     getData(motor_data, imu_data, BattLevel, BattPower);
     rcl_ret_t rc;
     rc += rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL);
-    //rc += rcl_publish(&_imu_pub, &_imu_msg, NULL);
-    /*rc += rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL);
-    rc += rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL);*/
+    rc += rcl_publish(&_imu_pub, &_imu_msg, NULL);
+    rc += rcl_publish(&_batt_lvl_pub, &_battery_lvl_msg, NULL);
+    rc += rcl_publish(&_batt_pwr_pub, &_battery_pwr_msg, NULL);
     /*
     RCSOFTCHECK(rcl_publish(&_joint_state_pub, &_joint_states_msg, NULL), 
                 "Publish Joint State Data");
@@ -327,25 +335,25 @@ void ROSComm::PublishCallback(volatile motor_data_t *motor_data, volatile imu_da
 void ROSComm::getData(volatile motor_data_t *motor_data, volatile imu_data_t *imu_data, int BattLevel, int BattPower)
 {
     bool succ;
-    /*_battery_lvl_msg.data = 99; //BattLevel
+    _battery_lvl_msg.data = 99; //BattLevel
     _battery_pwr_msg.data = 20.5; //BattPower
 
 
     int64_t now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
-    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp);*/
+    succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp);
 
     /*RCSOFTCHECK(!builtin_interfaces__msg__Time__copy(&_time_stamp, &_imu_msg.header.stamp),
     "Copy Time TO IMU Message");*/
 
-    /*_imu_msg.linear_acceleration.x = imu_data->accel.acceleration.x;
+    _imu_msg.linear_acceleration.x = imu_data->accel.acceleration.x;
     _imu_msg.linear_acceleration.y = imu_data->accel.acceleration.y;
     _imu_msg.linear_acceleration.z = imu_data->accel.acceleration.z;
 
     _imu_msg.angular_velocity.x = imu_data->gyro.gyro.x;
     _imu_msg.angular_velocity.y = imu_data->gyro.gyro.y;
-    _imu_msg.angular_velocity.z = imu_data->gyro.gyro.z;*/
+    _imu_msg.angular_velocity.z = imu_data->gyro.gyro.z;
 
 
     /*double lmotor_pos = lmotor->getPositionRad();
@@ -353,7 +361,7 @@ void ROSComm::getData(volatile motor_data_t *motor_data, volatile imu_data_t *im
     float rmotor_pos = rmotor->getPositionRad();
     float rmotor_speed = rmotor->getSpeedRad();*/
 
-    int64_t now = esp_timer_get_time();
+    now = esp_timer_get_time();
     _time_stamp.sec = now / 1000000;
     _time_stamp.nanosec = (now % 1000000) * 1000;
     succ &= builtin_interfaces__msg__Time__copy(&_time_stamp, &_joint_states_msg.header.stamp);

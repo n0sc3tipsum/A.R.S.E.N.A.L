@@ -75,7 +75,7 @@ public:
     IPAddress _agent_ip;
     size_t    _agent_port;
 
-private :
+// private :
 
     char             *_ssid;
     char             *_pswd;
