@@ -23,7 +23,7 @@
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 TaskHandle_t ROSTask;
 TaskHandle_t ControlTask;
-
+TaskHandle_t SetupTask;
 /* Shared Data */
 volatile double sp__left_motor_speed;
 volatile double sp__right_motor_speed;
@@ -36,7 +36,6 @@ volatile motor_data_t motor_data;
 
 /* Timers */
 ESP32Timer ITimer(3);
-
 
 /* Hardware Objects and Helper Classes */
 step left_motor  = step(STEPPER_INTERVAL_US, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
@@ -57,21 +56,20 @@ ROSComm espRosAgent;
  * @note          : Runs with a period of 10ms 
 */
 
-bool timerISR__runMotors(void * timerNo)
+bool IRAM_ATTR timerISR__runMotors(void * timerNo)
 {
-    static bool toggle = false;
-    
+    //static bool toggle = false;
+
     /* Move Motors */
     left_motor.runStepper();
     right_motor.runStepper();
 
     /* Toggle LED to Indicate Running Status */
-    digitalWrite(TOGGLE_PIN, toggle);  
-    toggle = !toggle;
+    //digitalWrite(TOGGLE_PIN, toggle);  
+    //toggle = !toggle;
     
     return true;
 }
-
 
 
 /*
@@ -83,8 +81,9 @@ bool timerISR__runMotors(void * timerNo)
  * @note                 : Used as a callback function that is attatched to the rcl executor object. Runs every 1 sec
 */
 
-void timerISR__publishData(rcl_timer_t * timer, int64_t last_call_time)
+void IRAM_ATTR timerISR__publishData(rcl_timer_t * timer, int64_t last_call_time)
 {
+
     espRosAgent.PublishCallback(&motor_data, &imu_data, batt.BatteryLevel, batt.TotalPower);
 }
 
@@ -99,39 +98,50 @@ void timerISR__publishData(rcl_timer_t * timer, int64_t last_call_time)
  * @note                 : Used as a callback function that is attatched to the rcl executor object. Runs every 1 sec
 */
 
-void getBodySetpointsISR(const void *msgin)
-{
+void IRAM_ATTR getBodySetpointsISR(const void *msgin)
+{  
+    auto core = xPortGetCoreID();
     float local_sp__roll_rate, local_sp__x_vel;
     espRosAgent.CommandCallback(msgin, &local_sp__roll_rate, &local_sp__x_vel);
+  
 
-    portENTER_CRITICAL(&mux);
     sp__roll_rate = local_sp__roll_rate;
     sp__x_vel     = local_sp__x_vel;
-    portEXIT_CRITICAL(&mux);
 
 }
 
-void getWheelSetpointsISR(const void *msgin)
+void IRAM_ATTR getWheelSetpointsISR(const void *msgin)
 {
     double local_sp__left_motor_speed, local_sp__right_motor_speed;
     espRosAgent.KinematicCommandCallback(msgin, &local_sp__left_motor_speed, &local_sp__right_motor_speed);
 
-    portENTER_CRITICAL(&mux);
     sp__left_motor_speed  = local_sp__left_motor_speed;
     sp__right_motor_speed = local_sp__right_motor_speed;
-    portEXIT_CRITICAL(&mux);
 }
 
 void SpinExecutor(void * param)
 {
     for (;;)
     {
+
         rclc_executor_spin_some(&espRosAgent.executor, RCL_MS_TO_NS(100));
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
+void setupISRTask(void *p)
+{
+    /* Setup Motors */
+    
+    if (!ITimer.attachInterruptInterval(STEPPER_INTERVAL_US, timerISR__runMotors)) 
+    {
+        Serial.println("Failed to start stepper interrupt");
+        while (1) delay(10);
+    }
 
+    Serial.println("Initialised Interrupt for Stepper");
+    vTaskDelete(NULL);
+}
 
 void ControlLoop(void * param)
 {
@@ -152,9 +162,9 @@ void ControlLoop(void * param)
             imu_data.accel.acceleration.z = a.acceleration.z;
 
             imu_data.gyro.gyro.pitch    = g.gyro.pitch;
-            imu_data.gyro.gyro.roll     = g.gyro.roll;
+            imu_data.gyro.gyro.roll     = g.gyro.roll + 0.09;
             imu_data.gyro.gyro.heading  = g.gyro.heading;
-            imu_data.gyro.gyro.y        = g.gyro.y;
+            imu_data.gyro.gyro.y        = g.gyro.y -0.015;
 
             motor_data.left_pos    = left_motor.getPositionRad();
             motor_data.left_speed  = left_motor.getSpeedRad();
@@ -162,15 +172,36 @@ void ControlLoop(void * param)
             motor_data.right_speed = right_motor.getSpeedRad();
             portEXIT_CRITICAL(&mux);
 
+            /*
+            * @brief  Outer-loop PID Velocity control Implementation
 
-            /* Outer Loop */
+            * This function implements the outer-loop PID control logic to update the reference tiltof the inner-loop based on velocity error of the system.
+            *
+            * @param millis         Function that returns the current time in milliseconds.
+            * @param speed_loop_period Variable holding the time when the next speed loop should execute.
+            * @param SPEED_INTERVAL Constant defining the interval for the speed loop execution.
+            * @param motor_data     Struct containing the left and right motor speed data.
+            * @param dtSpeed        Time interval for the speed control loop.
+            * @param KpSpeed        Proportional gain for the speed control PID.
+            * @param KiSpeed        Integral gain for the speed control PID.
+            * @param KdSpeed        Derivative gain for the speed control PID.
+            * @param sp__x_vel      Setpoint for the x velocity.
+            * @param body_x_vel     Calculated body velocity based on motor speeds.
+            * @param error__x_vel   Error in x velocity (setpoint - measured value).
+            * @param SpeedDerivative Derivative of the speed error.
+            * @param SpeedIntegral  Integral of the speed error.
+            * @param setpoint       Output control signal to be used as the reference tilt.
+            * @param PreviousSpeedError Previous speed error used for derivative calculation.
+            *
+            */
             if (millis() > speed_loop_period)
             {
                 speed_loop_period += SPEED_INTERVAL;
-
                 body_x_vel = (motor_data.left_speed + motor_data.right_speed)/2;
+                
+                portENTER_CRITICAL(&mux);
                 error__x_vel = sp__x_vel - body_x_vel;
-
+                portEXIT_CRITICAL(&mux);
 
                 SpeedDerivative = (error__x_vel - PreviousSpeedError) / dtSpeed;
                 SpeedIntegral += error__x_vel* dtSpeed;
@@ -185,11 +216,14 @@ void ControlLoop(void * param)
             {
                 angular_loop_period += LOOP_INTERVAL;
 
-                acceleration_tilt    = imu_data.accel.acceleration.z/9.67 - 0.09;
-                measured__roll_rate  = imu_data.gyro.gyro.y;
-
-                error__roll_rate       = sp__roll_rate - imu_data.gyro.gyro.roll + 0.1;
+                acceleration_tilt    = imu_data.accel.acceleration.z/9.67 - 0.14;
+                measured__roll_rate  = imu_data.gyro.gyro.y -0.015;
+                portENTER_CRITICAL(&mux);
+                error__roll_rate       = sp__roll_rate - imu_data.gyro.gyro.roll;
+                portEXIT_CRITICAL(&mux);
                 control_input__angular = RotateP * error__roll_rate;
+
+
 
                 tilt      = CompFilter(acceleration_tilt, measured__roll_rate, alpha, tilt);
                 error     = setpoint - tilt;
@@ -197,9 +231,16 @@ void ControlLoop(void * param)
 
                 PIDout   = error * Kp  - measured__roll_rate*Kd + integral * Ki;
 
+                float left_motor_in = PIDout + control_input__angular;
+                float right_motor_in = PIDout - control_input__angular;
+                /*Serial.print("Left motor in : ");
+                Serial.println(left_motor_in);
+                Serial.print("Right motor in : ");
+                Serial.println(right_motor_in); */
 
-                left_motor.setAccelerationRad(PIDout - control_input__angular);
-                right_motor.setAccelerationRad(PIDout + control_input__angular);
+                left_motor.setAccelerationRad(left_motor_in);
+                right_motor.setAccelerationRad(right_motor_in);
+
 
                 if (PIDout < 0)
                 {
@@ -264,14 +305,6 @@ void setup()
     imu.setFilterBandwidth(MPU6050_BAND_44_HZ);
 
 
-    /* Setup Motors */
-    if (!ITimer.attachInterruptInterval(STEPPER_INTERVAL_US, timerISR__runMotors)) 
-    {
-        Serial.println("Failed to start stepper interrupt");
-        while (1) delay(10);
-    }
-    Serial.println("Initialised Interrupt for Stepper");
-
     pinMode(STEPPER_EN, OUTPUT);
     digitalWrite(STEPPER_EN, false);
 
@@ -285,7 +318,7 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,246,236); //Set this to your desktop IP
+    espRosAgent._agent_ip = IPAddress(192,168,156,236); //Set this to your desktop IP
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);
@@ -312,7 +345,7 @@ void setup()
         RCSOFTCHECK(rclc_executor_add_subscription(
             &espRosAgent.executor, 
             &espRosAgent._kinematic_cmd_vel_sub, &espRosAgent._kinematic_cmd_msg, 
-            &getBodySetpointsISR, ON_NEW_DATA), 
+            &getWheelSetpointsISR, ON_NEW_DATA), 
             "Create Kinematic Cmd Subscription");
     }
 
@@ -321,7 +354,7 @@ void setup()
         RCSOFTCHECK(rclc_executor_add_subscription(
             &espRosAgent.executor, 
             &espRosAgent._cmd_vel_sub, &espRosAgent._cmd_vel_msg, 
-            &getWheelSetpointsISR, ON_NEW_DATA), 
+            &getBodySetpointsISR, ON_NEW_DATA), 
             "Create cmd_vel Subscription");
     }
 
@@ -337,11 +370,11 @@ void setup()
     xTaskCreatePinnedToCore(
         SpinExecutor,
         "Publish/Subscribe Task",
-        5000,
+        20000,
         NULL,
         1,
         &ROSTask,
-        0
+        1
     );
 
     /*Control Loop Runs on Core 1 
@@ -350,11 +383,21 @@ void setup()
     xTaskCreatePinnedToCore(
         ControlLoop,
         "Controller Task",
-        5000,
+        10000,
         NULL,
         2,
         &ControlTask,
-        1
+        0
+    );
+
+    xTaskCreatePinnedToCore(
+        setupISRTask,
+        "Controller Task",
+        2000,
+        NULL,
+        3,
+        &SetupTask,
+        0
     );
 }
 
