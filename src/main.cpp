@@ -247,6 +247,8 @@ void loop()
 
         
         //batt.getBatteryState();
+        
+        //batt.updatepowerStatus();
     }
 
     else
