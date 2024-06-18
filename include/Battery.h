@@ -15,8 +15,7 @@ public:
 
     Battery();
 
-    void getBatteryState();
-    int BatteryLevel;
+    void updatePowerStatus ();
     int getTotalPower;
     int getBatteryVoltage;
     int  getBatteryPercentage;
