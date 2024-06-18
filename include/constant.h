@@ -64,9 +64,8 @@
     float error__roll_rate = 0.0;
     float RotationIntegral = 0.0;
     float gyroX = 0.0;
-    const float RotateP = 0;
+    const float RotateP = 3;
     const float RotateI = 0.0;
-
     float control_input__angular = 0.0;
 
 
