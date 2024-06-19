@@ -1,0 +1,20 @@
+running egg_info
+writing ../../build/arsenal_server/arsenal_server.egg-info/PKG-INFO
+writing dependency_links to ../../build/arsenal_server/arsenal_server.egg-info/dependency_links.txt
+writing entry points to ../../build/arsenal_server/arsenal_server.egg-info/entry_points.txt
+writing requirements to ../../build/arsenal_server/arsenal_server.egg-info/requires.txt
+writing top-level names to ../../build/arsenal_server/arsenal_server.egg-info/top_level.txt
+reading manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'
+writing manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../../build/arsenal_server/arsenal_server.egg-info to /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server-0.0.0-py3.10.egg-info
+running install_scripts
+Installing cmd_rcvr script to /home/zas/dev_ws/install/arsenal_server/lib/arsenal_server
+Installing server_node script to /home/zas/dev_ws/install/arsenal_server/lib/arsenal_server
+writing list of installed files to '/home/zas/dev_ws/build/arsenal_server/install.log'

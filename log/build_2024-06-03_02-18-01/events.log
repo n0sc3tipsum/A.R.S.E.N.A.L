@@ -1,0 +1,76 @@
+[0.000000] (-) TimerEvent: {}
+[0.000461] (arsenal_server) JobQueued: {'identifier': 'arsenal_server', 'dependencies': OrderedDict()}
+[0.000615] (arsenal_server) JobStarted: {'identifier': 'arsenal_server'}
+[0.097286] (-) TimerEvent: {}
+[0.201450] (-) TimerEvent: {}
+[0.310590] (-) TimerEvent: {}
+[0.490079] (-) TimerEvent: {}
+[0.596957] (-) TimerEvent: {}
+[0.743716] (-) TimerEvent: {}
+[0.895505] (-) TimerEvent: {}
+[1.089341] (-) TimerEvent: {}
+[1.194043] (-) TimerEvent: {}
+[1.298291] (-) TimerEvent: {}
+[1.407859] (-) TimerEvent: {}
+[1.514560] (-) TimerEvent: {}
+[1.616230] (-) TimerEvent: {}
+[1.730073] (-) TimerEvent: {}
+[1.839134] (-) TimerEvent: {}
+[1.940481] (-) TimerEvent: {}
+[2.050104] (-) TimerEvent: {}
+[2.151991] (-) TimerEvent: {}
+[2.254969] (-) TimerEvent: {}
+[2.368047] (-) TimerEvent: {}
+[2.501464] (-) TimerEvent: {}
+[2.609353] (-) TimerEvent: {}
+[2.722580] (-) TimerEvent: {}
+[2.834894] (-) TimerEvent: {}
+[2.938157] (arsenal_server) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/arsenal_server', 'build', '--build-base', '/home/zas/dev_ws/build/arsenal_server/build', 'install', '--record', '/home/zas/dev_ws/build/arsenal_server/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/zas/dev_ws/src/arsenal_server', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'LANGUAGE': 'en_GB:en', 'USER': 'zas', 'XDG_SESSION_TYPE': 'wayland', 'SHLVL': '1', 'HOME': '/home/zas', 'OLDPWD': '/home/zas', 'DESKTOP_SESSION': 'ubuntu', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '2835', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'LOGNAME': 'zas', '_': '/usr/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'zas', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/UbuntuROS:@/tmp/.ICE-unix/2799,unix/UbuntuROS:/tmp/.ICE-unix/2799', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/d4d310b2_de55_46e1_be8a_093b58466136', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_GB.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.0OHSO2', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'GNOME_TERMINAL_SERVICE': ':1.111', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/zas/dev_ws/build/arsenal_server', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'COLCON': '1', 'VTE_VERSION': '6800', 'PYTHONPATH': '/home/zas/dev_ws/build/arsenal_server/prefix_override:/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages:'}, 'shell': False}
+[2.942984] (-) TimerEvent: {}
+[3.048662] (-) TimerEvent: {}
+[3.167854] (-) TimerEvent: {}
+[3.272258] (-) TimerEvent: {}
+[3.376177] (-) TimerEvent: {}
+[3.464860] (arsenal_server) StdoutLine: {'line': b'running egg_info\n'}
+[3.465351] (arsenal_server) StdoutLine: {'line': b'creating ../../build/arsenal_server/arsenal_server.egg-info\n'}
+[3.465425] (arsenal_server) StdoutLine: {'line': b'writing ../../build/arsenal_server/arsenal_server.egg-info/PKG-INFO\n'}
+[3.465488] (arsenal_server) StdoutLine: {'line': b'writing dependency_links to ../../build/arsenal_server/arsenal_server.egg-info/dependency_links.txt\n'}
+[3.465642] (arsenal_server) StdoutLine: {'line': b'writing entry points to ../../build/arsenal_server/arsenal_server.egg-info/entry_points.txt\n'}
+[3.465714] (arsenal_server) StdoutLine: {'line': b'writing requirements to ../../build/arsenal_server/arsenal_server.egg-info/requires.txt\n'}
+[3.465775] (arsenal_server) StdoutLine: {'line': b'writing top-level names to ../../build/arsenal_server/arsenal_server.egg-info/top_level.txt\n'}
+[3.465834] (arsenal_server) StdoutLine: {'line': b"writing manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'\n"}
+[3.479864] (-) TimerEvent: {}
+[3.487188] (arsenal_server) StdoutLine: {'line': b"reading manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'\n"}
+[3.487437] (arsenal_server) StdoutLine: {'line': b"writing manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'\n"}
+[3.487512] (arsenal_server) StdoutLine: {'line': b'running build\n'}
+[3.487625] (arsenal_server) StdoutLine: {'line': b'running build_py\n'}
+[3.495047] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/build/arsenal_server/build\n'}
+[3.495410] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/build/arsenal_server/build/lib\n'}
+[3.495496] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server\n'}
+[3.495583] (arsenal_server) StdoutLine: {'line': b'copying arsenal_server/server_node.py -> /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server\n'}
+[3.495650] (arsenal_server) StdoutLine: {'line': b'copying arsenal_server/__init__.py -> /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server\n'}
+[3.495716] (arsenal_server) StdoutLine: {'line': b'running install\n'}
+[3.495781] (arsenal_server) StdoutLine: {'line': b'running install_lib\n'}
+[3.495845] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server\n'}
+[3.495913] (arsenal_server) StdoutLine: {'line': b'copying /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server/server_node.py -> /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server\n'}
+[3.495983] (arsenal_server) StdoutLine: {'line': b'copying /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server/__init__.py -> /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server\n'}
+[3.496049] (arsenal_server) StdoutLine: {'line': b'byte-compiling /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server/server_node.py to server_node.cpython-310.pyc\n'}
+[3.498142] (arsenal_server) StdoutLine: {'line': b'byte-compiling /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server/__init__.py to __init__.cpython-310.pyc\n'}
+[3.498682] (arsenal_server) StdoutLine: {'line': b'running install_data\n'}
+[3.498796] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/install/arsenal_server/share/ament_index\n'}
+[3.498875] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/install/arsenal_server/share/ament_index/resource_index\n'}
+[3.498952] (arsenal_server) StdoutLine: {'line': b'creating /home/zas/dev_ws/install/arsenal_server/share/ament_index/resource_index/packages\n'}
+[3.499029] (arsenal_server) StdoutLine: {'line': b'copying resource/arsenal_server -> /home/zas/dev_ws/install/arsenal_server/share/ament_index/resource_index/packages\n'}
+[3.499106] (arsenal_server) StdoutLine: {'line': b'copying package.xml -> /home/zas/dev_ws/install/arsenal_server/share/arsenal_server\n'}
+[3.499185] (arsenal_server) StdoutLine: {'line': b'running install_egg_info\n'}
+[3.502207] (arsenal_server) StdoutLine: {'line': b'Copying ../../build/arsenal_server/arsenal_server.egg-info to /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server-0.0.0-py3.10.egg-info\n'}
+[3.505511] (arsenal_server) StdoutLine: {'line': b'running install_scripts\n'}
+[3.550354] (arsenal_server) StdoutLine: {'line': b'Installing server_node script to /home/zas/dev_ws/install/arsenal_server/lib/arsenal_server\n'}
+[3.564466] (arsenal_server) StdoutLine: {'line': b"writing list of installed files to '/home/zas/dev_ws/build/arsenal_server/install.log'\n"}
+[3.583327] (-) TimerEvent: {}
+[3.686141] (-) TimerEvent: {}
+[3.716597] (arsenal_server) CommandEnded: {'returncode': 0}
+[3.787342] (-) TimerEvent: {}
+[3.888984] (-) TimerEvent: {}
+[3.932393] (arsenal_server) JobEnded: {'identifier': 'arsenal_server', 'rc': 0}
+[3.933959] (-) EventReactorShutdown: {}

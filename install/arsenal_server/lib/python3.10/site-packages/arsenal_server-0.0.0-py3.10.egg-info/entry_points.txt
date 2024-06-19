@@ -1,0 +1,4 @@
+[console_scripts]
+cmd_rcvr = arsenal_server.cmd_rcvr:main
+server_node = arsenal_server.server_node:main
+

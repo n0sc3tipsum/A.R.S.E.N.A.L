@@ -1,0 +1,8 @@
+[0.000000] (-) TimerEvent: {}
+[0.000905] (arsenal_server) JobQueued: {'identifier': 'arsenal_server', 'dependencies': OrderedDict()}
+[0.001366] (arsenal_server) JobStarted: {'identifier': 'arsenal_server'}
+[0.119859] (-) TimerEvent: {}
+[0.231214] (-) TimerEvent: {}
+[0.357453] (arsenal_server) JobEnded: {'identifier': 'arsenal_server', 'rc': 0}
+[0.423281] (-) TimerEvent: {}
+[0.423751] (-) EventReactorShutdown: {}

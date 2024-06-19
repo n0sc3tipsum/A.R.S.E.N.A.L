@@ -1,0 +1,24 @@
+[1.496s] Invoking command in '/home/zas/dev_ws/src/arsenal_server': PYTHONPATH=/home/zas/dev_ws/build/arsenal_server/prefix_override:/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_server build --build-base /home/zas/dev_ws/build/arsenal_server/build install --record /home/zas/dev_ws/build/arsenal_server/install.log --single-version-externally-managed install_data
+[1.978s] running egg_info
+[1.982s] writing ../../build/arsenal_server/arsenal_server.egg-info/PKG-INFO
+[1.983s] writing dependency_links to ../../build/arsenal_server/arsenal_server.egg-info/dependency_links.txt
+[1.986s] writing entry points to ../../build/arsenal_server/arsenal_server.egg-info/entry_points.txt
+[1.986s] writing requirements to ../../build/arsenal_server/arsenal_server.egg-info/requires.txt
+[1.986s] writing top-level names to ../../build/arsenal_server/arsenal_server.egg-info/top_level.txt
+[1.988s] reading manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'
+[1.990s] writing manifest file '../../build/arsenal_server/arsenal_server.egg-info/SOURCES.txt'
+[1.991s] running build
+[1.991s] running build_py
+[1.991s] copying arsenal_server/server_node.py -> /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server
+[1.991s] running install
+[1.992s] running install_lib
+[1.994s] copying /home/zas/dev_ws/build/arsenal_server/build/lib/arsenal_server/server_node.py -> /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server
+[1.996s] byte-compiling /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server/server_node.py to server_node.cpython-310.pyc
+[1.998s] running install_data
+[1.998s] running install_egg_info
+[2.002s] removing '/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server-0.0.0-py3.10.egg-info' (and everything under it)
+[2.002s] Copying ../../build/arsenal_server/arsenal_server.egg-info to /home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server-0.0.0-py3.10.egg-info
+[2.004s] running install_scripts
+[2.081s] Installing server_node script to /home/zas/dev_ws/install/arsenal_server/lib/arsenal_server
+[2.082s] writing list of installed files to '/home/zas/dev_ws/build/arsenal_server/install.log'
+[2.219s] Invoked command in '/home/zas/dev_ws/src/arsenal_server' returned '0': PYTHONPATH=/home/zas/dev_ws/build/arsenal_server/prefix_override:/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/arsenal_server build --build-base /home/zas/dev_ws/build/arsenal_server/build install --record /home/zas/dev_ws/build/arsenal_server/install.log --single-version-externally-managed install_data

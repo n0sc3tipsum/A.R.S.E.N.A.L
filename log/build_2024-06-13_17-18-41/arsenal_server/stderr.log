@@ -1,0 +1,5 @@
+  File "/home/zas/dev_ws/install/arsenal_server/lib/python3.10/site-packages/arsenal_server/server_node.py", line 101
+    print "EEEEEEE" + e.output
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)?
+
