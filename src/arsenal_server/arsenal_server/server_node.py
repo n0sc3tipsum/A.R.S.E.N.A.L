@@ -1,17 +1,27 @@
+import os
 import rclpy
 import subprocess
 from rclpy.node import Node
 from flask import Flask, jsonify #, Response
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 #import cv2
 #import numpy as np
 
+
+
 app = Flask(__name__)
 
 # target velocities for left and right wheels
-target_velocity_L = 0.0
-target_velocity_R = 0.0
+lin_x = 0.0
+lin_y = 0.0
+lin_z = 0.0
+ang_x = 0.0
+ang_y = 0.0
+ang_z = 0.0
+
+ANG_VEL = 0.5
 
 # whether or not the robot should be navigating autonomously
 auto_navigate = False
@@ -41,38 +51,114 @@ def readBatteryVoltage():
     return batteryVoltage
     
 #------------------------------------- 
-    
+
 @app.route('/moveForward')
 def moveForward():
-    global target_velocity_L, target_velocity_R
-    target_velocity_L = 5.0
-    target_velocity_R = 5.0
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 3.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = 0.0
     publish_velocity()
     return 'Moving forward'
+    
+@app.route('/moveForwardAndLeft')
+def moveForwardAndLeft():
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 5.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = -ANG_VEL
+    publish_velocity()
+    return 'Moving forward and left'
+    
+@app.route('/moveForwardAndRight')
+def moveForwardAndRight():
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 5.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = ANG_VEL
+    publish_velocity()
+    return 'Moving forward and right'
 
 @app.route('/moveBackward')
 def moveBackward():
-    global target_velocity_L, target_velocity_R
-    target_velocity_L = -5.0
-    target_velocity_R = -5.0
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = -3.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = 0.0
     publish_velocity()
     return 'Moving backward'
+    
+@app.route('/moveBackwardAndLeft')
+def moveBackwardAndLeft():
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = -5.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = ANG_VEL
+    publish_velocity()
+    return 'Moving backward and left'
+    
+@app.route('/moveBackwardAndRight')    
+def moveBackwardAndRight():
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = -5.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = -ANG_VEL
+    publish_velocity()
+    return 'Moving backward and right'
 
-@app.route('/turnLeft')
+@app.route('/turnLeft') # A
 def turnLeft():
-    global target_velocity_L, target_velocity_R
-    target_velocity_L = -5.0
-    target_velocity_R = 5.0
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 0.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = -ANG_VEL
     publish_velocity()
     return 'Turning left'
 
 @app.route('/turnRight')
 def turnRight():
-    global target_velocity_L, target_velocity_Rs
-    target_velocity_L = 5.0
-    target_velocity_R = -5.0
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 0.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = ANG_VEL
     publish_velocity()
     return 'Turning right'
+    
+@app.route('/haltMovement')
+def haltMovement():
+    global lin_x, lin_y, lin_z, ang_x, ang_y, ang_z
+    lin_x = 0.0
+    lin_y = 0.0
+    lin_z = 0.0
+    ang_x = 0.0
+    ang_y = 0.0
+    ang_z = 0.0
+    publish_velocity()
+    return 'Halting movement'
 
 @app.route('/toggleAutonomousNavigation')
 def toggleAutonomousNavigation():
@@ -88,17 +174,41 @@ def launchServer():
 
 @app.route('/launchSim')
 def launchSim():
-    return launchScript("launchSim.sh")
+    return launchScript("")
 
 @app.route('/launchMapping')
 def launchMapping():
-    return launchScript("launchMapping.sh")
+    return launchScript("online_sync.launch.py")
+
+@app.route('/XXX', methods=['PUT'])
+def XXX():
+    if 'file' not in request.files:
+        return jsonify(message="No file part in the request"), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify(message="No file selected for uploading"), 400
+
+    file_path = os.path.join("~/server_tmp", file.filename)  # Ensure the directory path is correct
+
+    file.save(file_path)
+    
+    # Pass the file to the bash script
+    try:
+        result = subprocess.run(['~/arsenal_server_2/launchNavigating.sh', file_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return jsonify({"output": result.stdout.decode('utf-8')}), 200
+    except subprocess.CalledProcessError as e:
+        return jsonify(message="Failed to execute launchNavigating.sh", error_output=e.stderr)
 
 @app.route('/launchNavigating')
 def launchNavigating():
-    return "launchNavigating IS NOT YET IMPLEMENTED"
+    return launchScript('\"nav.launch.py use_sim_time:=false map_subscribe_transient_local:=true\"')
+   
+@app.route('/startLocalization')
+def startLocalization():
+    return launchScript('\"localisation.launch.py use_sim_time:=false map:=./src/arsenal_navigator/maps/demo_map2.yaml\"')
     
-# launchFileList = a string with the file name of each launch file, separated by spaces (e.g., "launchfile1.launch.py launchfile2.launch.py launchfile3.launch.py")
+# launchFileList = a string with the file name of each launch file, sepsarated by spaces (e.g., "launchfile1.launch.py launchfile2.launch.py launchfile3.launch.py")
 def launchScript(launchFileList):
     try:
         subprocess_result = subprocess.run(["~/arsenal_server_2/subsytemLauncher.sh " + launchFileList], shell=True, check=True, capture_output=True, text=True)
@@ -107,6 +217,18 @@ def launchScript(launchFileList):
         return jsonify(message="Failed to execute " + launchFileList, error_output=e.stderr)
 	
 #-------------------------------------
+@app.route('/startPiCam', methods=['POST'])
+def startPiCam():
+    raspi_ip = request.get_data(as_text=True)
+    print("RECEIVED RASPI IP" + raspi_ip)
+    try:
+        subprocess_result = subprocess.run(["~/dev_ws/robotComm.sh arsenal " + raspi_ip], shell=True, check=True, capture_output=True, text=True)
+        return jsonify(message="PiCam started", output=subprocess_result.stdout)
+    except subprocess.CalledProcessError as e:
+        return jsonify(message="Failed to start PiCam", error_output=e.stderr)
+
+
+#-------------------------------------
 
 class FlaskServerNode(Node):
     def __init__(self):
@@ -114,7 +236,7 @@ class FlaskServerNode(Node):
         super().__init__('arsenal_server_node')
         
         # create publisher to publish command velocities
-        self.publisher = self.create_publisher(String, 'cmd_vel', 10)
+        self.publisher = self.create_publisher(Twist, 'manual_cmd_vel', 10)
         
         # create subscription to bot status from raspi
         self.bot_status_subscription = self.create_subscription(String, 'bot_status', self.listener_callback_bot_status, 10) # get bot status from rasp, with a buffer of 10
@@ -123,10 +245,17 @@ class FlaskServerNode(Node):
         self.get_logger().info('Flask server node has been started.')
 
     def publish_velocity(self):
-        msg = String()
-        msg.data = str(target_velocity_L) + ', ' + str(target_velocity_R)
+        msg = Twist()
+        
+        msg.linear.x  = lin_x
+        msg.linear.y  = lin_y
+        msg.linear.z  = lin_z
+        msg.angular.x = ang_x
+        msg.angular.y = ang_y
+        msg.angular.z = ang_z
+        
         self.publisher.publish(msg)
-        self.get_logger().info('Published velocities: ' + msg.data)
+        self.get_logger().info('Published velocities')
         
     def listener_callback_bot_status(self, msg):
         global powerConsumption, remainingCharge, batteryVoltage
