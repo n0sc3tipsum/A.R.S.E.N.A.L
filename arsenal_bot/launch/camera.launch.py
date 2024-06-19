@@ -12,6 +12,7 @@ def generate_launch_description():
     framerate = LaunchConfiguration('framerate', default='30')
     camera_frame_id = LaunchConfiguration('camera_frame_id', default='camera_link_optical')
     brightness = LaunchConfiguration('brightness', default='50')
+    target_color = LaunchConfiguration('target_color', default='blue')
 
     return LaunchDescription([
 
@@ -41,7 +42,12 @@ def generate_launch_description():
             default_value=brightness,
             description='Brightness of the image'),
 
-        # Node configuration
+        DeclareLaunchArgument(
+            'target_color',
+            default_value=target_color,
+            description='Target color for detection'),
+
+        # Camera node configuration
         Node(
             package='raspicam_node',
             executable='raspicam_node',
@@ -52,6 +58,17 @@ def generate_launch_description():
                 'framerate': framerate,
                 'camera_frame_id': camera_frame_id,
                 'brightness': brightness
+                }],
+            output='screen'
+        ),
+
+        # Color detection node configuration
+        Node(
+            package='arsenal_bot',
+            executable='color_detection',
+            name='color_detection_node',
+            parameters=[{
+                'target_color': target_color
                 }],
             output='screen'
         )
