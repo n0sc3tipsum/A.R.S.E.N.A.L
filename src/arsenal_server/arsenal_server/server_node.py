@@ -2,10 +2,11 @@ import os
 import rclpy
 import subprocess
 from rclpy.node import Node
-from flask import Flask, jsonify #, Response
+from flask import Flask, jsonify, request, Response
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
+
 #import cv2
 #import numpy as np
 
@@ -34,6 +35,23 @@ batteryVoltage = '---'
 @app.route('/')
 def index():
     return 'MoolyFTW'
+
+@app.after_request
+def add_security_headers(response: Response) -> Response:
+    csp_policy = (
+        "default-src 'self'; "
+        "script-src 'self' http://192.168.230.66; "
+        "style-src 'self'; "
+        "img-src 'self'; "
+        "font-src 'self'; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+    response.headers['Content-Security-Policy'] = csp_policy
+    return response
+
 
 @app.route('/readPowerConsumption')
 def readPowerConsumption():
@@ -180,26 +198,6 @@ def launchSim():
 def launchMapping():
     return launchScript("online_sync.launch.py")
 
-@app.route('/XXX', methods=['PUT'])
-def XXX():
-    if 'file' not in request.files:
-        return jsonify(message="No file part in the request"), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify(message="No file selected for uploading"), 400
-
-    file_path = os.path.join("~/server_tmp", file.filename)  # Ensure the directory path is correct
-
-    file.save(file_path)
-    
-    # Pass the file to the bash script
-    try:
-        result = subprocess.run(['~/arsenal_server_2/launchNavigating.sh', file_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return jsonify({"output": result.stdout.decode('utf-8')}), 200
-    except subprocess.CalledProcessError as e:
-        return jsonify(message="Failed to execute launchNavigating.sh", error_output=e.stderr)
-
 @app.route('/launchNavigating')
 def launchNavigating():
     return launchScript('\"nav.launch.py use_sim_time:=false map_subscribe_transient_local:=true\"')
@@ -211,22 +209,43 @@ def startLocalization():
 # launchFileList = a string with the file name of each launch file, sepsarated by spaces (e.g., "launchfile1.launch.py launchfile2.launch.py launchfile3.launch.py")
 def launchScript(launchFileList):
     try:
-        subprocess_result = subprocess.run(["~/arsenal_server_2/subsytemLauncher.sh " + launchFileList], shell=True, check=True, capture_output=True, text=True)
+        subprocess_result = subprocess.run(["~/arsenal_server_2/subsystemLauncher.sh " + launchFileList], shell=True, check=True, capture_output=True, text=True)
         return jsonify(message="Launched " + launchFileList, output=subprocess_result.stdout)
     except subprocess.CalledProcessError as e:
         return jsonify(message="Failed to execute " + launchFileList, error_output=e.stderr)
 	
 #-------------------------------------
+
 @app.route('/startPiCam', methods=['POST'])
 def startPiCam():
     raspi_ip = request.get_data(as_text=True)
-    print("RECEIVED RASPI IP" + raspi_ip)
+    print("STARTING PiCam - RECEIVED RASPI IP: " + raspi_ip)
     try:
-        subprocess_result = subprocess.run(["~/dev_ws/robotComm.sh arsenal " + raspi_ip], shell=True, check=True, capture_output=True, text=True)
+        subprocess_result = subprocess.run(["~/dev_ws/robotComm.sh 0 n0sc3tipsum " + raspi_ip], shell=True, check=True, capture_output=True, text=True)
         return jsonify(message="PiCam started", output=subprocess_result.stdout)
     except subprocess.CalledProcessError as e:
         return jsonify(message="Failed to start PiCam", error_output=e.stderr)
 
+@app.route('/startLiDAR', methods=['POST'])
+def startLiDAR():
+    raspi_ip = request.get_data(as_text=True)
+    print("STARTING LiDAR - RECEIVED RASPI IP: " + raspi_ip)
+    try:
+        subprocess_result = subprocess.run(["~/dev_ws/robotComm.sh 1 n0sc3tipsum " + raspi_ip], shell=True, check=True, capture_output=True, text=True)
+        return jsonify(message="LiDAR started", output=subprocess_result.stdout)
+    except subprocess.CalledProcessError as e:
+        return jsonify(message="Failed to start LiDAR", error_output=e.stderr)
+
+#-------------------------------------
+
+@app.route('/startFoxgloveBridge')
+def startFoxgloveBridge():
+    print("STARTING FOXGLOVE BRIDGE")
+    try:
+        subprocess_result = subprocess.run(["~/dev_ws/startFoxgloveBridge.sh"], shell=True, check=True, capture_output=True, text=True)
+        return jsonify(message="Started Foxglove Bridge", output=subprocess_result.stdout)
+    except subprocess.CalledProcessError as e:
+        return jsonify(message="Failed to start Foxglove Bridge", error_output=e.stderr)
 
 #-------------------------------------
 
@@ -310,6 +329,7 @@ if __name__ == '__main__':
 #     echo "Running launch file: $launch_file"
 #     ros2 launch arsenal_navigator "$launch_file"
 # done
+
 
 
 
