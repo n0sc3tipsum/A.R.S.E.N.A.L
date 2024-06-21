@@ -10,5 +10,5 @@
 - **EspBridgeDual**
     - Implementation of PID control and integration  (Production Controller).
 - **ArsenalServer**
-    - Server side code 
+    - Server side code which includes SLAM navigation and mapping
 
