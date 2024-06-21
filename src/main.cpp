@@ -84,7 +84,7 @@ bool IRAM_ATTR timerISR__runMotors(void * timerNo)
 void IRAM_ATTR timerISR__publishData(rcl_timer_t * timer, int64_t last_call_time)
 {
 
-    espRosAgent.PublishCallback(&motor_data, &imu_data, batt.BatteryLevel, batt.TotalPower);
+    espRosAgent.PublishCallback(&motor_data, &imu_data, batt.batteryLevel, batt.totalPower);
 }
 
 
@@ -144,11 +144,12 @@ void setupISRTask(void *p)
 }
 
 void ControlLoop(void * param)
-{
+{        
+    static unsigned long angular_loop_period = 0;   
+    static unsigned long speed_loop_period   = 0;   
+    static unsigned long batt_update_period  = 0;
     for (;;)
     {
-        static unsigned long angular_loop_period = 0;   
-        static unsigned long speed_loop_period   = 0;   
 
         if (!espRosAgent._kin_en) 
         {  
@@ -254,7 +255,14 @@ void ControlLoop(void * param)
                     right_motor.setTargetSpeedRad(20);
                 }
 
-            }
+            }        
+            /*if (millis() > batt_update_period)
+            {
+                batt_update_period += LOOP_INTERVAL;
+                portENTER_CRITICAL(&mux);
+                batt.updatePowerStatus();
+                portEXIT_CRITICAL(&mux);
+            }*/
 
         }
 
@@ -263,6 +271,8 @@ void ControlLoop(void * param)
             left_motor.setTargetSpeedRad(sp__left_motor_speed);
             right_motor.setTargetSpeedRad(sp__right_motor_speed);
         }
+
+
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -280,7 +290,7 @@ void setup()
     Serial.begin(115200);
     pinMode(TOGGLE_PIN, OUTPUT);
 
-    const unsigned int rcl_timer_period = 1000;
+    const unsigned int rcl_timer_period = 20;
     const bool use_kinematic_control = false;
 
     sp__left_motor_speed  = 0.0;
@@ -318,7 +328,7 @@ void setup()
         Serial.println("Connecting to WiFi..");
     }
 
-    espRosAgent._agent_ip = IPAddress(192,168,156,236); //Set this to your desktop IP
+    espRosAgent._agent_ip = IPAddress(192,168,112,236); //Set this to your desktop IP
     espRosAgent._esp_ip = WiFi.localIP();
     Serial.print("Connected to WiFi with local IP : ");
     Serial.println(espRosAgent._esp_ip);

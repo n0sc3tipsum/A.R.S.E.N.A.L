@@ -15,7 +15,7 @@
     const int SPEED_INTERVAL = 50;
     const int ROTATION_INVERVAL = 1;
     const int  STEPPER_INTERVAL_US = 20;
-
+    const long BATT_UPDATE_PERIOD = 5000;
     // complementary filter
     float dt = LOOP_INTERVAL / 1000.0;
     float dtSpeed = SPEED_INTERVAL / 1000.0;

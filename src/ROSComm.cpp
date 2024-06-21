@@ -335,8 +335,8 @@ void ROSComm::PublishCallback(volatile motor_data_t *motor_data, volatile imu_da
 void ROSComm::getData(volatile motor_data_t *motor_data, volatile imu_data_t *imu_data, int BattLevel, int BattPower)
 {
     bool succ;
-    _battery_lvl_msg.data = 99; //BattLevel
-    _battery_pwr_msg.data = 20.5; //BattPower
+    _battery_lvl_msg.data = BattLevel; //BattLevel
+    _battery_pwr_msg.data = BattPower;
 
 
     int64_t now = esp_timer_get_time();
