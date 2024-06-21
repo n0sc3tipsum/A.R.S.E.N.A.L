@@ -7,7 +7,7 @@
     - Implementation of PID control (Development Controller)
   - Tests
     - code for monitoring robot (telemetry) and data collection
-- **EspBridge-Dual**
+- **EspBridgeDual**
     - Implementation of PID control and integration  (Production Controller).
 - **ArsenalServer**
     - Server side code 
