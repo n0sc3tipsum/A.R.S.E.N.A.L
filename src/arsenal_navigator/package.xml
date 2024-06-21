@@ -19,22 +19,24 @@
   <depend>rviz</depend>
   <depend>control_msgs</depend>
   <depend>control_toolbox</depend>
+  <depend>ros2_control</depend>
+  <depend>ros2_controllers</depend>
   <depend>controller_interface</depend>
   <depend>controller_manager</depend>
   <depend>controller_manager_msgs</depend>
   <depend>slam_toolbox</depend>
   <depend>navigation2</depend>
   <depend>gazebo</depend>
+  <depend>gazebo_ros2_control</depend>
+  <depend>laser_controller</depend>
+  <depend>libgazebo_ros_ray_sensor</depend>
+
   <depend>tf_transformations</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>topic_based_ros2_control</depend>
   <depend>robot_localization</depend>
-  <depend>raspicam_node</depend>
-  <depend>cv_bridge</depend>
-  <depend>opencv</depend>
-  <depend>numpy</depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

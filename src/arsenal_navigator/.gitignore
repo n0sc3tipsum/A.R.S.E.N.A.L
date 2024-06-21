@@ -1,0 +1,10 @@
+./vscode
+log/
+build/
+install/
+.colcon/
+__pycache__/
+*.py[cod]
+*$py.class
+src/arsenal_navigator/test/
+*.log

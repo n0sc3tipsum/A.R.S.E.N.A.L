@@ -18,13 +18,17 @@ def generate_launch_description():
 
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='true',
+        default_value='false',
         description='Use simulation/Gazebo clock')
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
         default_value=default_params_file,
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
 
+    # If the provided param file doesn't have slam_toolbox params, we must pass the
+    # default_params_file instead. This could happen due to automatic propagation of
+    # LaunchArguments. See:
+    # https://github.com/ros-planning/navigation2/pull/2243#issuecomment-800479866
     has_node_params = HasNodeParams(source_file=params_file,
                                     node_name='slam_toolbox')
 

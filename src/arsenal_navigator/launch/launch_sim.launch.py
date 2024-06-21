@@ -23,7 +23,7 @@ def generate_launch_description():
     #rviz_config_path = os.path.join(pkg_path, 'config/sim_bot.rviz')
     gazebo_params_file = os.path.join(get_package_share_directory(package_name),'config','gazebo_params.yaml')
     #robot_description = Command(['ros2 param get --hide-type /robot_state_publisher robot_description'])
-    #controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
+    controller_params_file = os.path.join(get_package_share_directory(package_name),'config','controllers.yaml')
 
 
     robot_description_file = os.path.join(pkg_path, 'description', 'arsenal_robot_description.urdf.xacro')
@@ -51,11 +51,21 @@ def generate_launch_description():
                     launch_arguments={'extra_gazebo_args': '--ros-args --params-file ' + gazebo_params_file}.items()
              )
 
+    # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
                                    '-entity', 'my_bot'],
                         output='screen')
 
+
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[{'robot_description': robot_description},
+                    controller_params_file]
+    )
+
+    delayed_controller_manager = TimerAction(period=3.0, actions=[controller_manager])
 
     diff_drive_spawner = Node(
         package="controller_manager",
@@ -87,9 +97,13 @@ def generate_launch_description():
     # Launch them all
     return LaunchDescription([
         rsp,
+        #joystick,
         twist_mux,
         gazebo,
         spawn_entity,
+        #delayed_controller_manager,
         delayed_diff_drive_spawner,
         delayed_joint_broad_spawner,
+        # diff_drive_spawner,
+        # joint_broad_spawner
     ])

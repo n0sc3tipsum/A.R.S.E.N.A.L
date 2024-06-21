@@ -1,7 +1,7 @@
 controller_manager:
   ros__parameters:
-    update_rate: 30
-    #use_sim_time: false
+    update_rate: 40
+    use_sim_time: false
 
     diff_cont:
       type: diff_drive_controller/DiffDriveController
@@ -18,20 +18,20 @@ diff_cont:
 
     left_wheel_names: ['left_wheel_joint']
     right_wheel_names: ['right_wheel_joint']
-    wheel_separation: 0.113
-    wheel_radius: 0.03
+    wheel_separation: 0.119
+    wheel_radius: 0.0335
 
     use_stamped_vel: false
 
     open_loop: false    
-    #position_feedback: false
+    position_feedback: true
 
     # wheels_per_side: x
     # wheel_separation_multiplier: x
     # left_wheel_radius_multiplier: x
     # right_wheel_radius_multiplier: x
 
-    # odom_frame_id: x
+    odom_frame_id: odom
     # pose_covariance_diagonal: x
     # twist_covariance_diagonal: x
     # open_loop: x

@@ -4,8 +4,8 @@ twist_mux:
       navigation:
         topic   : cmd_vel
         timeout : 0.5
-        priority: 50
-      teleop:
+        priority: 25
+      manual:
         topic   : manual_cmd_vel
         timeout : 0.5
-        priority: 100
+        priority: 50
