@@ -11,4 +11,9 @@
     - Implementation of PID control and integration  (Production Controller).
 - **ArsenalServer**
     - Server side code which includes SLAM navigation and mapping
+- **ArsenalServerBoot**
+    - User interface code
+    - Server code to handle HTTP requests from UI
+    - Bash scripts for automated start up of other subsystems
+    
 
