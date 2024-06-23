@@ -10,3 +10,13 @@ The main server boot code is in `src/arsenal_server/arsenal_server/server_node.p
 The bash scripts are at root (ending in `.sh`).
 
 The rest is largely unimportant for understanding the code.
+
+------
+
+## Evidence of operation
+
+Here is power data being read from the ESP32 and being displayed on the UI. For more, see the report.
+
+![esp32](https://github.com/n0sc3tipsum/A.R.S.E.N.A.L/blob/ArsenalServerBoot/ev2.jpg?raw=true)
+
+![ui](https://github.com/n0sc3tipsum/A.R.S.E.N.A.L/blob/ArsenalServerBoot/ev1.jpg?raw=true)
